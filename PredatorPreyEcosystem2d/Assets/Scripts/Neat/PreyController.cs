@@ -1,6 +1,8 @@
 using Assets.Scripts.Food;
 using Assets.Scripts.Neat;
+using System;
 using UnityEngine;
+using static Unity.VisualScripting.Member;
 
 public class PreyController : MonoBehaviour
 {
@@ -16,6 +18,7 @@ public class PreyController : MonoBehaviour
     [Header("NEAT")]
     public NeatNetwork network;
     public int inputNodes, outputNodes;
+    public Color spriteColor;
     //private NeatGenome genome;
 
     private float hitDivider = 20f;
@@ -31,6 +34,7 @@ public class PreyController : MonoBehaviour
 
 
     private float[] sensors;
+    private float pastVelocity;
 
     void Awake()
     {
@@ -43,12 +47,15 @@ public class PreyController : MonoBehaviour
         //genome = new NeatGenome(inputNodes, outputNodes);
         //network = new NeatNetwork(genome);
         sensors = new float[inputNodes];
+
+        gameObject.GetComponent<SpriteRenderer>().color = spriteColor;
     }
 
     void FixedUpdate()
     {
         SetSensors();
         float[] outputs = network.FeedForward(sensors);
+        pastVelocity = outputs[0];
         MovePrey(outputs[0], outputs[1]);
         UpdatePreyState();
         
@@ -56,7 +63,7 @@ public class PreyController : MonoBehaviour
 
     private void UpdatePreyState()
     {
-        currentEnergy -= Time.deltaTime;
+        currentEnergy -= Time.deltaTime + (Math.Abs(pastVelocity) * Time.deltaTime);
 
         if(currentEnergy <= 0)
         {
@@ -121,6 +128,7 @@ public class PreyController : MonoBehaviour
                     sensors[1 + i] = hit.distance / hitDivider;
                     Debug.DrawLine(transform.position, hit.point, Color.white);
                 }
+                else sensors[1 + i] = 1.0f;
             }
         }
 
@@ -134,10 +142,11 @@ public class PreyController : MonoBehaviour
                     sensors[4 + i] = hit.distance / hitDivider;
                     Debug.DrawLine(transform.position, hit.point, Color.yellow);
                 }
+                else sensors[4 + i] = 1.0f;
             }
         }
 
-        sensors[7] = transform.position.x / wallLimitX;
-        sensors[8] = transform.position.y / wallLimitY;
+        //sensors[7] = transform.position.x / wallLimitX;
+        //sensors[8] = transform.position.y / wallLimitY;
     }
 }

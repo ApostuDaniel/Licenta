@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using static Unity.VisualScripting.Member;
 
 namespace Assets.Scripts.Neat
 {
@@ -17,6 +20,23 @@ namespace Assets.Scripts.Neat
                 list[k] = list[n];
                 list[n] = value;
             }
+        }
+
+        public static (byte r, byte g, byte b) CreateColorFromId(int id)
+        {
+            String hash;
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            hash = String.Concat(md5.ComputeHash(BitConverter
+              .GetBytes(id))
+              .Select(x => x.ToString("x2")));
+
+            hash = hash.Substring(hash.Length - 7, 6);
+
+            byte r = (byte)Int32.Parse(hash[..2], System.Globalization.NumberStyles.HexNumber);
+            byte g = (byte)Int32.Parse(hash[2..4], System.Globalization.NumberStyles.HexNumber);
+            byte b = (byte)Int32.Parse(hash[4..6], System.Globalization.NumberStyles.HexNumber);
+
+            return (r, g, b);
         }
     }
 }

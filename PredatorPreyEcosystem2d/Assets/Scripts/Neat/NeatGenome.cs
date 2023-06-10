@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Assets.Scripts.Neat
@@ -11,36 +13,51 @@ namespace Assets.Scripts.Neat
 
         public List<NodeGene> nodeGenes;
         public List<ConnectionGene> connectionGenes;
+        public int speciesHint;
 
-        public int InNodes { get;}
-        public int OutNodes { get;}
+        public int InNodes { get; }
+        public int OutNodes { get; }
 
-        public NeatGenome(List<NodeGene> nodeGenes, List<ConnectionGene> connectionGenes)
+        //public NeatGenome(List<NodeGene> nodeGenes, List<ConnectionGene> connectionGenes)
+        //{
+        //    this.nodeGenes = nodeGenes; this.connectionGenes = connectionGenes;
+
+        //    foreach (NodeGene nodeGene in nodeGenes)
+        //    {
+
+        //        switch (nodeGene.type)
+        //        {
+        //            case TYPE.Input: InNodes++; break;
+        //            case TYPE.Output: OutNodes++; break;
+        //            default: break;
+        //        }
+        //    }
+        //}
+
+        public NeatGenome(int inputNodes, int outputNodes)
         {
-            this.nodeGenes = nodeGenes; this.connectionGenes = connectionGenes;
+            InNodes = inputNodes;
+            OutNodes = outputNodes;
+            nodeGenes = new List<NodeGene>(inputNodes + outputNodes);
+            connectionGenes = new List<ConnectionGene>(inputNodes * outputNodes);
+        }
 
-            foreach (NodeGene nodeGene in nodeGenes)
+        public NeatGenome(NeatGenome genome) : this(genome.InNodes, genome.OutNodes)
+        {
+            speciesHint = genome.speciesHint;
+
+            CopyNodes(genome);
+
+            foreach(var conGene in genome.connectionGenes)
             {
-
-                switch (nodeGene.type)
-                {
-                    case TYPE.Input: InNodes++; break;
-                    case TYPE.Output: OutNodes++; break;
-                    default: break;
-                }
+                var inNode = nodeGenes[conGene.inNode.id];
+                var outNode = nodeGenes[conGene.outNode.id];
+                connectionGenes.Add(new ConnectionGene(inNode, outNode, conGene.weight, conGene.isEnabled, conGene.inovationNr));
             }
         }
 
-        public NeatGenome()
+        public NeatGenome(int inputNodes,  int outputNodes, float weightRange = 1f) : this(inputNodes, outputNodes)
         {
-            nodeGenes = new List<NodeGene>();
-            connectionGenes = new List<ConnectionGene>();
-        }
-
-        public NeatGenome(int inputNodes,  int outputNodes, float weightRange = 1f) : this()
-        {
-            InNodes = inputNodes; OutNodes = outputNodes;
-
             InitiateRandomWeightsGenome(weightRange);
         }
 
@@ -78,6 +95,130 @@ namespace Assets.Scripts.Neat
             }
         }
 
+        public NeatGenome CrossOver(NeatGenome parent2, float p1Fitness, float p2Fitness, float inheritDisabledGeneProb)
+        {
+            var child = new NeatGenome(this.InNodes, this.OutNodes);
+            if (p1Fitness > p2Fitness || (p1Fitness == p2Fitness && this.nodeGenes.Count >= parent2.nodeGenes.Count)) child.CopyNodes(this);
+            else child.CopyNodes(parent2);
+
+            int idx1 = 0, idx2 = 0;
+            while (idx1 < this.connectionGenes.Count && idx2 < parent2.connectionGenes.Count)
+            {
+                var p1Gene = this.connectionGenes[idx1];
+                var p2Gene = parent2.connectionGenes[idx2];
+
+                if (p1Gene.inovationNr == p2Gene.inovationNr)
+                {
+                    child.AddMatchingGene(p1Gene, p2Gene, inheritDisabledGeneProb);
+                    idx1++;
+                    idx2++;
+                }
+                else if(p1Gene.inovationNr < p2Gene.inovationNr)
+                {
+                    if(p1Fitness >= p2Fitness)
+                    {
+                        child.AddCopyOfGene(p1Gene);
+                    }
+                    idx1++;
+                }
+                else
+                {
+                    if (p2Fitness > p1Fitness)
+                    {
+                        child.AddCopyOfGene(p2Gene);
+                    }
+                    idx2++;
+                }
+            }
+
+            if(idx1 < this.connectionGenes.Count && p1Fitness >= p2Fitness) {
+                for ( int i = idx1; i < this.connectionGenes.Count; i++)
+                {
+                    child.AddCopyOfGene(this.connectionGenes[i]);
+                }
+            }
+            else if(idx2 < parent2.connectionGenes.Count && p2Fitness > p1Fitness)
+            {
+                for (int i = idx2; i < parent2.connectionGenes.Count; i++)
+                {
+                    child.AddCopyOfGene(parent2.connectionGenes[i]);
+                }
+            }
+
+            return child;
+        }
+
+        private void AddMatchingGene(ConnectionGene p1Gene, ConnectionGene p2Gene, float inheritDisabledGeneProb)
+        {
+            var isEnabled = (p1Gene.isEnabled && p2Gene.isEnabled) || Random.value > inheritDisabledGeneProb;
+
+            var choiceGene = Random.value <= 0.5f ? p1Gene : p2Gene;
+
+            this.AddCopyOfGene(choiceGene);
+            this.connectionGenes[^1].isEnabled = isEnabled;
+        }
+
+        public float ComputeDistance(NeatGenome genome, float excessCoef, float disjointCoef, float weightDiffCoef)
+        {
+            int matchingCount = 0, disjointCount = 0, excessCount = 0, maxGeneCount;
+            float totaWeightDifference = 0;
+
+            int idx1 = 0, idx2 = 0;
+            while (idx1 < this.connectionGenes.Count && idx2 < genome.connectionGenes.Count)
+            {
+                var p1Gene = this.connectionGenes[idx1];
+                var p2Gene = genome.connectionGenes[idx2];
+
+                if (p1Gene.inovationNr == p2Gene.inovationNr)
+                {
+                    totaWeightDifference += Mathf.Abs(p1Gene.weight - p2Gene.weight);
+                    matchingCount++;
+                    idx1++;
+                    idx2++;
+                }
+                else if (p1Gene.inovationNr < p2Gene.inovationNr)
+                {
+                    disjointCount++;
+                    idx1++;
+                }
+                else
+                {
+                    disjointCount++;
+                    idx2++;
+                }
+            }
+
+            if (idx1 < this.connectionGenes.Count)
+            {
+                excessCount = this.connectionGenes.Count - idx1;
+            }
+            else if (idx2 < genome.connectionGenes.Count)
+            {
+                excessCount = this.connectionGenes.Count - idx1;
+            }
+
+            maxGeneCount = Mathf.Max(this.connectionGenes.Count, genome.connectionGenes.Count);
+            maxGeneCount = maxGeneCount > 30 ? maxGeneCount : 1;
+
+            return ((excessCoef * excessCount) / maxGeneCount) + ((disjointCoef * disjointCount) / maxGeneCount) + (weightDiffCoef * (totaWeightDifference / matchingCount));
+        }
+
+        private void CopyNodes(NeatGenome genome)
+        {
+            this.nodeGenes.Clear();
+            foreach (NodeGene nodeGene in genome.nodeGenes)
+            {
+                nodeGenes.Add(new NodeGene(nodeGene.id, nodeGene.type));
+            }
+        }
+
+        private void AddCopyOfGene(ConnectionGene gene)
+        {
+            var inNodeId = gene.inNode.id;
+            var outNodeId = gene.outNode.id;
+            this.connectionGenes.Add(new ConnectionGene(this.nodeGenes[inNodeId], this.nodeGenes[outNodeId], gene.weight, gene.isEnabled, gene.inovationNr));
+        }
+
         private bool InnovateConnection(InovationManger inovManager, float reassignmentRange)
         {
             
@@ -103,14 +244,14 @@ namespace Assets.Scripts.Neat
                         case TYPE.Input:
                             var newConnToHidden = new ConnectionGene(node2, node1, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
                             {
-                                inovationNr = inovManager.GetInv()
+                                inovationNr = inovManager.GetInv(node2.id, node1.id)
                             };
                             connectionGenes.Add(newConnToHidden);
                             return true;
                         case TYPE.Output:
                             var newConnToOutput = new ConnectionGene(node1, node2, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
                             {
-                                inovationNr = inovManager.GetInv()
+                                inovationNr = inovManager.GetInv(node1.id, node2.id)
                             };
                             connectionGenes.Add(newConnToOutput);
                             return true;
@@ -120,14 +261,14 @@ namespace Assets.Scripts.Neat
                             {
                                 newConnHiddenToHidden = new ConnectionGene(node2, node1, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
                                 {
-                                    inovationNr = inovManager.GetInv()
+                                    inovationNr = inovManager.GetInv(node2.id, node1.id)
                                 };
                             }
                             else
                             {
                                 newConnHiddenToHidden = new ConnectionGene(node1, node2, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
                                 {
-                                    inovationNr = inovManager.GetInv()
+                                    inovationNr = inovManager.GetInv(node1.id, node2.id)
                                 };
                             }
                             connectionGenes.Add(newConnHiddenToHidden);
@@ -167,8 +308,8 @@ namespace Assets.Scripts.Neat
 
             var conn1 = new ConnectionGene(geneToSplit.inNode, newNode, 1f, true, 0);
             var conn2 = new ConnectionGene(newNode, geneToSplit.outNode, geneToSplit.weight, true, 0);
-            conn1.inovationNr = inovManager.GetInv();
-            conn2.inovationNr = inovManager.GetInv();
+            conn1.inovationNr = inovManager.GetInv(geneToSplit.inNode.id, newNode.id);
+            conn2.inovationNr = inovManager.GetInv(newNode.id, geneToSplit.outNode.id);
 
             connectionGenes.Add(conn1);
             connectionGenes.Add(conn2);

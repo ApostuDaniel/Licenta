@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
 using Unity.VisualScripting.Dependencies.NCalc;
 using UnityEditor.MemoryProfiler;
 using UnityEngine;
@@ -80,12 +79,12 @@ namespace Assets.Scripts.Neat
 
         private List<Node> TranslateGenomeToNetworkNodes()
         {
-            //var nodes = new List<Node>();
             var nodes = new Dictionary<int, Node>();
 
-            //foreach (var nodeGene in neatGenome.nodeGenes) {
-            //    nodes.Add(new Node(nodeGene.id));
-            //}
+            foreach (var nodeGene in neatGenome.nodeGenes.GetRange(0, neatGenome.InNodes + neatGenome.OutNodes))
+            {
+                nodes.Add(nodeGene.id, new Node(nodeGene.id));
+            }
 
             Node addNodeAndReturn(int nodeIndex) { nodes.Add(nodeIndex, new Node(nodeIndex)); return nodes[nodeIndex]; }
 

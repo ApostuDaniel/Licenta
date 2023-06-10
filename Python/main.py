@@ -9,16 +9,17 @@ if __name__ == '__main__':
     headers = ['generation', 'average_fitness', 'best_fitness', 'best_hidden_nodes', 'best_nr_connections']
     # headers = ['generation', 'average_fitness', 'best_fitness']
 
-    fileName = r"E:\Faculatate\Anul3\Licenta\PredatorPreyEcosystem2d\Logs\Fitness\fitness_log_638218438609049015.csv"
+    fileName = r"E:\Faculatate\Anul3\Licenta\PredatorPreyEcosystem2d\Logs\Fitness\fitness_log_638220373417462089.csv"
     df = pd.read_csv(fileName, sep=",", decimal=".", index_col=0)
-
-    print(df)
     # df['generation'] = df['generation'].astype(int)
     # df['average_fitness'] = df['average_fitness'].astype(float)
     # df['best_fitness'] = df['best_fitness'].astype(float)
     # print(df.dtypes)
     # df[['generation', 'average_fitness', 'best_fitness']].plot()
-    df[['average_fitness', 'best_fitness', 'best_hidden_nodes']].plot()
+    df[['best_fitness']].plot()
+    df[['average_fitness']].plot()
+    df[['best_hidden_nodes']].plot()
+    df[['best_nr_connections']].plot()
 
     #
     plt.show()
