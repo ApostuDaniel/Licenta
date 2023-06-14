@@ -1,0 +1,96 @@
+\chapter{NEAT} \label{NEAT}
+
+Algoritmul NEAT a fost descris pentru prima oara de Keneth O. Stanley si Risto Miikkulainen in articolul lor "Evolving Neural Networks through Augmenting Topologies"\cite{NEAT}.
+In abordarile clasice ale \textbf{NeuroEvolutiei}(NE), se alege o topologie initiala a retelelor neuronale iar in timpul experimentelor algoritmii cauta doar in spatiul ponderilor conexiunilor. Ins topologia(structura) retelelor area deasemenea un impact asupra comportamentelor pe care le formeaza o retea. Un argument bun pentru a aplica evolutia atat asupra ponderilor cat si topologiei vine din partea lui Gruau\cite{gruau}, care sustinea ca evolutia structurii unei retele economiseste timpul pe care l-ar fi folosit un om in a decide topologia pentru o anumita problema de NE. A demonstrat asta evoluând topologia si conexiunile unei retele care a reusit sa rezolve cel mai dificil benchmark de pole balancing de atunci(1996), double pole balancing.
+\begin{wrapfigure}{l}{0.25\textwidth} %this figure will be at the right
+    \centering
+    \includegraphics[width=0.25\textwidth]{images/pole_balancing.drawio.png}
+\end{wrapfigure}
+Totusi, aceasi problema a fost rezolvat de 5 ori mai rapid de \textbf{Enforced Subpopulations}(ESP)\cite{ESP}, astfel, autorii NEAT si-au propus sa demonstreze un argument mai puternic pentru evolutia structurilor, anume ca modificand atat topologia cat si ponderile putem spori cu mult performanta algoritmilor NE. NEAT poate face asta datorita faptului ca minimizeaza structurile retelelor pe tot parcursul algoritmului. 
+Au existat pe parcursul timpului mai multe metode de evolutie atat pentru topologiile cat si ponderile retelelor neuronale, ale caror ideii autorii le-au unit in \cite{NEAT} sub termenul de \textbf{"TWEANS"}(Topology and Weight Evolving Artificial Neural Networks). Pentru dezvoltarea NEAT Kenneth O. Stanley a adresat un numar de probleme nerezolvat la clasa de algoritmi TWEANS. Inainte de asta ar trebui totusi sa prezentam cum functioneaza retelele neuronale si modul lor de a invata.
+
+\section{Retele Neuronale Artificiale}
+In natura, o retea neuronala reprezinta o retea de neuroni interconectati, care sunt responsabili de functionarea sistemului nervos. Sunt specializati in transmiterea informatiei prin semnale electrice si au 4 componente principale, dendritele, corpul celular, axonul si butonii terminali.
+\begin{wrapfigure}{l}{0.25\textwidth} %this figure will be at the right
+    %to add a photo of a neuron's structure
+    \includegraphics[width=0.25\textwidth]{images/logoFii.png}
+\end{wrapfigure}
+Fiecare neuron primeste informatie prin dendrite si le trasmite prin axon printr-un semnal electric cu toata puterea sa, daca a primit destula informatie prin Dendrite. Neuronii sunt conectati intre ei prin sinapse, iar sinapsele isi pot adapta numarul de receptori pentru a controla puterea semnalului care vine de la un neruon.
+O retea neuronala artificiala este compusa dintr-o serie de noduri conectate intre ele ca un graf. 
+Ca structura, o retea are un strat de noduri de iesire, unul de noduri de iesire, iar retelele deep au si un numar de straturi ascunse.
+Fiecare conexiune are o pondere asociata ei ce reprezinta puterea conexiunii. 
+\begin{wrapfigure}{l}{0.25\textwidth} %this figure will be at the right
+    %to add a photo of a neural network
+    \includegraphics[width=0.25\textwidth]{images/logoFii.png}
+\end{wrapfigure}
+Aceste ponderi se pot adapta astfe incat reteau sa functioneze conform asteptarilor. Conform Teoriei Aproximarii Universale, o retea neuronala ar putea sa ajunga aproape de a a aproxima orice functie pentru care este conceputa.
+Spre deosebire de creier, in o retea neuronala pot exista mai multe tipuri de neuroni, determinati de o functie de activare. Daca nu folosim o functie de activare, valoarea unui neuron este reprezentata de o suma ponderata a intrarilor plus optional un bias al neuronului.
+
+% de inserat formula sumei ponderate.
+
+Daca este folosita o functie de activare, atunci semnalul nodului va fi outputul functiei de activare, iar input-ul este suma ponderata dintre conexiunie si intrarile nodului.
+\begin{wrapfigure}{l}{0.25\textwidth} %this figure will be at the right
+    %image of activation function
+    \includegraphics[width=0.25\textwidth]{images/logoFii.png}
+\end{wrapfigure}
+\begin{wrapfigure}{r}{0.25\textwidth} %this figure will be at the right
+    %image of activation function
+    \includegraphics[width=0.25\textwidth]{images/logoFii.png}
+\end{wrapfigure}
+Retelele neuronale artificiale traditionale sunt feedforward, adica datele sunt procesate intr-o singura directie, de la input la output, iar invatarea se face prin algoritmul de backpropagation.
+In documentul care descrie NEAT, nu sunt expuse restrictii asupra conexiunilor care se pot forma, deci algoritmul poate duce la generarea retelelor neuronale recurente.
+\begin{wrapfigure}{l}{0.25\textwidth} %this figure will be at the right
+    %image of RNN
+    \centering
+    \includegraphics[width=0.25\textwidth]{images/logoFii.png}
+\end{wrapfigure}
+Acestea pot procesa date secventiale, deoarece contin conexiuni ciclice, ce se pot forma intre oricare noduri, inclusiv nodul de la care conexiunea a pornit. La fiecare pas de timp, in RNN nodurile proceseaza atat intrarea curenta cat si iesirea nodului recurent anterior, ceea ce permite retelei sa utilizeze informatii din trecut.
+Pentru antrenare NEAT nu foloseste backtracking, ci operatorii genetici.
+
+
+\section{Problemele in TWEANNs si inovatiile in NEAT}
+\subsection{Codificare}\label{Codificare}
+O problema pe care trebuie sa o rezolve orice TWEANN este modul in care specificam genomul unui individ. Aici sunt doua categorii mai mari, \textbf{codificare indirecta}  si \textbf{directa}.
+Codificarea indirecte de obicei doar specifica reguli pentru crearea fenotipului, si sunt specifice algoritmilor care le folosesc
+Pentru codificarea directa optiuni sunt \textbf{codificarea binara}, care foloseste codificare clasica a grafurilor cu siruri de biti, precum "Structured Genetic Algorithm"(sGA)\cite{sGA}, care reprezinta prin siruri de biti matriciea de conexiuni a retelei, insa cele mai intalinte codificari sunt cele de tip graf, care reprezinta grafurile in mod mai explicit.
+NEAT foloseste o codificare directa, din cauza ca codificarile indirecte neavand un maping direct la fenotip, daca nu suntem foarte familiari cu procesele genetice, cautarea poate fi perturbata in moduri inpredicitibile si greu de detectat. Codificare pe care o alegem este foarte importanta, deoarece aceasta afecteaza costul operatiei de crossover, astfel ca exista TWEANNs "nonmating", care nici macar nu folosesc acest operator\\
+Codificarea NEAT a fost proiectata cu scopul de a permite alinierea genom-urilor pentru crossover fara a fi nevoie de o analiza costisitoare a topologiei. Aceasta codificare este reprezentata de o lista de node genes, si o lista de connection genes. Pentru fiecare node gene este specificat id-ul sau si tipul de nod, care clasifica nodurile in noduri de intrare, de iesire, si noduri ascunse. Primele sunt nodurile de intrare, dupa care cele de iesire iar cele hidden sa adauga la capatul listei in urma mutatiilor.
+Fiecare conection gene contine: un in-node si un out-node, care exprima nodurile si directia conexiunii, ponderea asociata cu conexiunea, o valoare boolean care indica daca conexiunea ar trebui sa fie exprimata in fenotip, si un numar de inovatie(prezentam de ce este necesar in sectiunea \ref{Numar de inovatie}), care permite gasire geneleor care corespund din diferiti indivizi si e una din piesele centrale ale algoritmului.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.25\textwidth]{images/logoFii.png}
+    \caption{Genotipul și fenotipul exprimat de acesta}
+    \label{fig:encoding}
+\end{figure}
+
+\subsection{Initializarea populatiei}\label{Initializare}
+La majoritatea algoritmilor din clasa TWEANN, populatia initiala este generata cu topologii random, pentru a asigura diversitate in structurile retelelor. Totusi, initializare in modul asta produce multe probleme pentru TWEANNS:
+\begin{enumerate}
+    \item Nu avem nici o garantie ca informatia poate ajunge din fiecare intrare la fiecare iesire, ceea ce poate face ca unele intrari sa fie irelevante. Timp important de procesare va fi pierdut pentru a scapa de astfel de retele.
+    \item Ideal am dori ca solutiile obtinute sa fie minime, adica un numar minim de noduri si conexiuni, deoarece o retea mai complexa necesita mai mult timp pentru optimizarea ponderilor. Cu initilizare random, o mare parte din timp ar fi folosita pentru filtrarea structurilor extra care nu ar fi trebuit sa existe de la început. Evaluarea relelor mai complexe ia mai mult timp, dar prin aceasta initializare nu avem nici o garantie ca solutia va fi minima, deoarece orice retea atata timp cat are un fitness mare poate domina peste celelalte.
+\end{enumerate}
+
+Solutia NEAT este sa inceapa in mod minim. Populatia initiala are fiecare nod de intrare conectat cu cele de iesire cu ponderi random, si nici un nod ascuns, astfel solutia va adauga structuri noi doar atunci cand aceste ajuta la imbunatatirea fitness-ului. Astfel se asigura minimalitatea nu doar la final dar pe parcursul tuturor generatiilor. Ar trebui sa precizam ca initial, adaugand unei retele structuri noi, care nu au fost optimizate, va face ca fitness-ul sa scada initial, deci indivizii cu inovatii topologice sunt la risc sa dispara, asta fiind un alt motiv pentru care majoritatea algoritmilor TWEANN folosesc initializare cu topologii random. Pentru a evita pierderea inovatiilor, NEAT foloseste \textbf{"Speciatiea"}, pe care o vom detalia in sectiunea \ref{Speciatie}.
+
+\subsection{Problema conventiilor concurente si numerele de inovatie}\label{Numar de inovatie}
+Problema conventiilor concurente apare atunci cand exista mai mult de un singur mod de a reprezenta o retea neuronala optimizata pentru o problema.
+Crossover in
+
+
+\subsection{Operatori Genetici}\label{OperatoriGenetici}
+NEAT foloseste 2 operatori genetici pentru modificarea genomul-ui indivizilor, mutatia (fig \ref*{fig:mutation}) si crossover.
+Prin mutatie, ca si la ceilalti algoritmi de NE, se pot modifica ponderile, prin perturbarea lor sau prin asignarea unei noi valori random, insa pentru NEAT mutatie este si modalitate prin care introducem schimbari structurale.
+Sunt folosite 2 tipuri de mutatie structurala, "add connection", prin care se adauga o conexiune cu pondere random intre oricare 2 noduri care nu erau conectate deja, si "add node", care alege o conexiune in mod aleatoriu, si adauga un nou nod in locul ei.
+Mai exact, conexiunea aleasa este dezactivata, si se creaza o noua conexiune intre nodul de intrare al conexiunii dezactivate si nodul nou creat, cu ponderea de 1, iar conexiunea dintre nodul nou si nodul de iesire primeste ponderea celei dezactivate.
+Astfel se minimizeaza efectul initial al modificarilor structurale, iar ponderile noilor conexiuni vor fi modificate in generatiile viitoare.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.25\textwidth]{images/logoFii.png}
+    \caption{Cele 2 tipuri de mutatie, "add connection" si "add node"}
+    \label{fig:mutation}
+\end{figure}
+
+
+
+\subsection{Speciație}\label{Speciatie}
+
