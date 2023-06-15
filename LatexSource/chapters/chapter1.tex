@@ -74,8 +74,11 @@ Solutia NEAT este sa inceapa in mod minim. Populatia initiala are fiecare nod de
 
 \subsection{Problema conventiilor concurente si numerele de inovatie}\label{Numar de inovatie}
 Problema conventiilor concurente apare atunci cand exista mai mult de un singur mod de a reprezenta o retea neuronala optimizata pentru o problema.
-Crossover in
-
+Crossover in cazul a doua astfel de solutii poate duce la pierderea de informatie in cadrul noului copil format.
+Aceasta problema este inca mai grava in cadrul TWEANNs, deoarce solutii pentru o problema pot fi reprezentate prin topologii complet diferite, iar genomul fiecăreia poate avea lungimi diferite, agravand problema conventiilor concurente. 
+Solutia in cadrul NEAT la aceasta problema este inspirata din solutia naturii in cadrul reproducerii sexuale, adica \textbf{omologia}, doua gene fiind omoloage daca ele sunt trasaturi ale aceleiasi alele.
+NEAT stabileste omologia dintre gene prin intermediul \textbf{marcatorilor istorici}, reprezentati de \textbf{numere de inovatie}, care permit stabilirea originii istorice a unei gene, iar astfel putem identifica si genele omoloage.
+Vom presznta cum apar si cum sunt folosite numerele de inovatie in sectiunile \ref*{OperatoriGenetici} si \ref*{Speciatie}
 
 \subsection{Operatori Genetici}\label{OperatoriGenetici}
 NEAT foloseste 2 operatori genetici pentru modificarea genomul-ui indivizilor, mutatia (fig \ref*{fig:mutation}) si crossover.
@@ -89,8 +92,47 @@ Astfel se minimizeaza efectul initial al modificarilor structurale, iar ponderil
     \caption{Cele 2 tipuri de mutatie, "add connection" si "add node"}
     \label{fig:mutation}
 \end{figure}
-
-
+De fiecare data cand producem o modificare structurala, fiecare gena de conexiune are adaugat si un nou numar de inovatie din punct de vedere global.
+Acest numar ne permite sa stabilim originea istorica a acestei gene.
+Daca in cursul unei generatii, pastram o lista a inovatiilor care au avut loc iar in genomul a 2 indivizi diferiti va aparea o aceasi gena de conexiune, poate doar cu ponderi diferite, aceste gene vor primi ambele acelasi numar de inovatie, pentru ca reprezinta aceasi structura dar care a aparut in mod indepedent in cadrul fiecareai.
+Crossover reprezinta incrucisarea genomului celor 2 parinti, pentru a crea un copil ce are structuri din partea ambilor
+Acum, datorita marcatorilor istorici, in cadrul crossover doua genomuri pot fi aliniate dupa genele care au numere de inovatie egale, acestea sunt gene "matching".
+Genele care nu sunt matching sunt fie "disjoint" daca sunt in limita numerelor de inovatie a ambilor parinti, fie "excess" daca unul din parinti are numere de inovatii mai mari decat cel mai mare numar al celuilalt parinte.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.25\textwidth]{images/logoFii.png}
+    \caption{Procesul de "matching" pentru doua genomuri diferite}
+    \label{fig:crossover}
+\end{figure}
+In cadrul compunerii copilului, acesta mosteneste in mod aleator genele matching ale ambilor parinti, insa doar genele disjoint si excess ale parintelui cu cel mai mare "fitness".
+In cazul in care ambii parinti au fitness egal, atunci si genele excess si disjoint sunt mostenite aleator.
+Pentru genele dezactivate, este o probabilitate prestabilita ca o gena sa ramana dezactivata daca ea e asa in cadrul oricaruia dintre parinti.
+\\
+Prin intermediul acestor 2 operatori genetici, este introdusa diversitate in cadrul populatiei.
+Totusi, de obicei, datorita faptului ca strutucturile mai mici au mai putin conexiuni, aceste se pot optimiza mai rapid, iar adaugarea de noi structuri, pana acestea sunt optimizate, va scadea din fitness-ul retelei, deci inevitabil noile inovatii ar disparea rapid din o populatie normale, cu tote ca potential ele ar fi chiar necesare.
+Din acest motiv in NEAT este nevoie de \textbf{Speciatie}, pe care o prezentam in sectiunea \ref*{Speciatie}.
 
 \subsection{Speciație}\label{Speciatie}
+Speciatia este un mod de a proteja noile inovatii topologice aparute.
+Ideea este de a permite indivizilor sa concureze in propria lor nisa, nu cu intreaga populatie.
+Pentru a detalia, topologiile similare din cadrul populatiei vor fi incadrate in specii, organismele din aceleasi specii concureaza in principal intre ele, si astfel au timp sa isi optimizeze conexiunile.
+Cum anume sunt determinate speciile si organismele din cadrul lor? Tot cu ajutorul numerelor de inovatie. 
+Numarul de gene "desjoint" si "excess" sunt un indicator bun al distantei din punct de vedere al compatibilitatii intre 2 genoame.
+Astfel, autorii NEAT au ajuns la o formula simpla care sa masoare compatibilitatea ca o distanta intre 2 structuri diferite in NEAT(notam $\delta$) in termeni de numar de gene excess $E$ si numar de gene desjoint $D$, plus media diferentei dintre genele matching $\tilde{W}$:
+\[\delta = \frac{c1*E}{N} + \frac{c2*D}{N} + c3*\tilde{W}\]
+Coeficientii $c1$, $c2$ si $c3$ ajusteaza importanta acestor factori, iar $N$, care reprezinta numarul de connection genes a genomului cel mai lung, normalizeaza valorile conform dimensiunii genomului.
+Prin calculul valorii $delta$ putem desfasura procesul de speciatie cu ajutorul unei valori stabilite in prealabil $\delta t$.
+Procesul de speciatie se desfasoara in urmatorul mod.
+Fiecare specie are un genom care o reprezinta. Fie un genom $g$ din generatia curenta, acesta este plasat in prima specie cu a carui reprezentant este compatibil, adica  $\delta < delta t$.
+Daca nu exista nici o specie compatibila, se formeaza una noua cu $g$ ca reprezentat al acesteia.
 
+\subsection{Reproducerea}\label{Reproducerea}
+NEAT foloseste un mecanism numit \textbf{"explicit fitness sharing"} pentru a evita ca o specie sa devina prea mare si sa ajunga de dimensiunea intregii populatii.
+Practic, toate organismele din aceasi specie impartasec fitness-ul speciei lor.
+Fitness-ul ajustat al organismului $i$ este calculat prin formula:
+\[f\prime_i  = \frac{f_i}{\sum_{j = 1}^{n}sh(\delta(i,j))}\]
+unde $f\prime_i$ e fitness-ul ajustat al individului $i$, $n$ e numarul de organimse din populatie, iar functia $sh$ are valoare 0 cand $\delta(i, j)$ este peste $\delta_t$, dar 1 altfel.
+Astfel, partea de jos a fractiei reprezinta doar numarul de indivizi din aceasi specie cu organismul $i$.
+Fiecarei specii ii este acordat un numar diferit de membri potentiali depinzand de suma a $f\prime_i$ a membrilor speciei.
+Intreaga populatie este apoi inlocuita de copii membrilor mai buni ai fiecarei specii, membrii mai slabi fiind eliminati in prealabil.
+Scopul final al speciatiei este protejare inovatiilor topologice, iar sistemul intreg cauta o solutie in cel mai rapid mod posibil, deoarece inovatii noi apar si sunt pastrate doar atunci cand e necesar.
