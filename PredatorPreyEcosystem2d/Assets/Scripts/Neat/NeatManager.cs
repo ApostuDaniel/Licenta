@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -22,9 +21,9 @@ namespace Assets.Scripts.Neat
 
         [Header("NEAT parameters")]
         public int inputNodes, outputNodes;
-        
+
         public float initWeightRange = 1f;
-        public float elitismFactor = 0.05f;
+        //public float elitismFactor = 0.05f;
         public float mutationProb = 0.8f;
         public float weightPerturbanceProb = 0.9f;
         public float newNodeProb = 0.05f;
@@ -34,11 +33,13 @@ namespace Assets.Scripts.Neat
         public float inheritDisabledGeneProb = 0.75f;
         public float chanceMutationNoCrossover = 0.25f;
         public float interSpeciesMatingRate = 0.001f;
-        public int speciesDropoffAge = 15;
-        public float survivalTreshold = 0.4f;
-        public float compatibilityTreshold = 3.0f;
-        public float compatibilityModif = 0.3f;
-        public int speciesTargetCount = 5;
+        public int speciesDropoffAge = 40;
+        public float survivalTreshold = 0.3f;
+        public float minCompatibilityTreshold = 1.0f;
+        public float compatibilityTreshold = 1.0f;
+        public float maxCompatibilityTreshold = 5.0f;
+        public float compatibilityModif = 0.2f;
+        public int speciesTargetCount = 4;
         public float excessCoef = 1.0f;
         public float disjointCoef = 1.0f;
         public float weightDiffCoef = 0.4f;
@@ -102,20 +103,12 @@ namespace Assets.Scripts.Neat
 
         private void ProduceNextGeneration()
         {
-            //RankNetworks();
-            //LogFitnessInfo();
-            //SelectGeneration();
-            //MutateGeneration();
-            //GenerateNetworks();
-            //GenerateCreatures();
-            //currentGeneration++;
-
             inovationManger.ResetForNextGeneration();
+            AdjustCompatibiltyTreshold();
             ComputeAllSpeciesAdjustedFitness();
             AdjustAllSpeciesPotentialMemeberCount();
             GenerateNextGenGenomes();
             SpeciesRepartition();
-            AdjustCompatibiltyTreshold();
             GenerateNetworks();
             GenerateCreatures();
             currentGeneration++;
@@ -123,22 +116,23 @@ namespace Assets.Scripts.Neat
 
         private void AdjustCompatibiltyTreshold()
         {
-            if(currentGeneration > 1)
+            if (currentGeneration > 1)
             {
-                if(species.Count < speciesTargetCount) compatibilityTreshold -= compatibilityModif;
-                else if(species.Count > speciesTargetCount) compatibilityTreshold += compatibilityModif;
+                if (species.Count < speciesTargetCount && compatibilityTreshold > minCompatibilityTreshold) compatibilityTreshold -= compatibilityModif;
+                else if (species.Count > speciesTargetCount && compatibilityTreshold < maxCompatibilityTreshold) compatibilityTreshold += compatibilityModif;
 
-                if (compatibilityTreshold < compatibilityModif) compatibilityTreshold = compatibilityModif;
+                if (compatibilityTreshold < minCompatibilityTreshold) compatibilityTreshold = minCompatibilityTreshold;
+                if (compatibilityTreshold > maxCompatibilityTreshold) compatibilityTreshold = maxCompatibilityTreshold;
             }
         }
 
         private void SpeciesRepartition()
         {
-            for(int i = 0; i < allGenomes.Length; i++)
+            for (int i = 0; i < allGenomes.Length; i++)
             {
                 var genome = allGenomes[i];
                 var potentialSpecies = species.Find(s => s.Id == genome.speciesHint);
-                var distanceFromSpecies = potentialSpecies?.SpeciesRepresentative.ComputeDistance(genome, excessCoef, disjointCoef, weightDiffCoef);
+                var distanceFromSpecies = potentialSpecies == null ? 100f : potentialSpecies.SpeciesRepresentative.ComputeDistance(genome, excessCoef, disjointCoef, weightDiffCoef);
                 if (potentialSpecies != null && distanceFromSpecies < compatibilityTreshold)
                 {
                     potentialSpecies.MembersIdx.Add(i);
@@ -146,7 +140,7 @@ namespace Assets.Scripts.Neat
                 else
                 {
                     bool speciesFound = false;
-                    foreach(var s in species)
+                    foreach (var s in species)
                     {
                         distanceFromSpecies = s.SpeciesRepresentative.ComputeDistance(genome, excessCoef, disjointCoef, weightDiffCoef);
                         if (distanceFromSpecies < compatibilityTreshold)
@@ -161,16 +155,23 @@ namespace Assets.Scripts.Neat
                 }
             }
 
-            RemoveEmptySpecies();
+            foreach(var s in species)
+            {
+                if(s.MembersIdx.Count > 0) s.GenerationsSinceMemebersAssigned = 0;
+                else s.GenerationsSinceMemebersAssigned++;
+            }
+
+            RemoveRedundantSpecies();
         }
 
-        private void RemoveEmptySpecies()
+        private void RemoveRedundantSpecies()
         {
+            int deadline = 3;
             for (int i = 0; i < species.Count; i++)
             {
-                if (species[i].MembersIdx.Count == 0)
+                if (species[i].GenerationsSinceMemebersAssigned >= deadline)
                 {
-                    Debug.Log($"<color=#{species[i].GetStringColor()}>Species numbered {species[i].Id} dropped, no members assigned to the species: best fitness = {species[i].LastBestFitness}</color>");
+                    Debug.Log($"<color=#{species[i].GetStringColor()}>Species numbered {species[i].Id} dropped, no members assigned to the species for {deadline} generations: best fitness = {species[i].LastBestFitness}</color>");
                     species.RemoveAt(i);
                     i--;
                 }
@@ -189,10 +190,11 @@ namespace Assets.Scripts.Neat
         private void GenerateNextGenGenomes()
         {
             var newGenomes = new List<NeatGenome>(startingPopulation);
-            foreach(var s in species)
+            foreach (var s in species)
             {
+                if (s.MembersIdx.Count == 0) continue;
                 //Choose a a random representative organism for the species
-                (s.SpeciesRepresentative, _)= ChooseRandOrganism(s);
+                (s.SpeciesRepresentative, _) = ChooseRandOrganism(s);
 
                 //If a species has more organisms than topMemberSelectionCutoff keep the top member unchnaged in the next gen
                 if (s.MembersIdx.Count > topMemberSelectionCutoff)
@@ -202,11 +204,11 @@ namespace Assets.Scripts.Neat
                     s.PotentialMembersCount--;
                 }
 
-                while(s.PotentialMembersCount > 0)
+                while (s.PotentialMembersCount > 0)
                 {
                     NeatGenome child;
-                    var (parent1, p1Fitness)= ChooseRandOrganism(s);
-                    if(UnityEngine.Random.value <= chanceMutationNoCrossover)
+                    var (parent1, p1Fitness) = ChooseRandOrganism(s);
+                    if (UnityEngine.Random.value <= chanceMutationNoCrossover)
                     {
                         child = new NeatGenome(parent1)
                         {
@@ -216,10 +218,14 @@ namespace Assets.Scripts.Neat
                     else
                     {
                         NeatGenome parent2; float p2Fitness;
-                        if(UnityEngine.Random.value <= interSpeciesMatingRate)
+                        if (UnityEngine.Random.value <= interSpeciesMatingRate)
                         {
                             //Choose a random organism from a random species
-                            var choosenSpecies = species[UnityEngine.Random.Range(0, species.Count)];
+                            Species choosenSpecies;
+                            do
+                            {
+                                choosenSpecies = species[UnityEngine.Random.Range(0, species.Count)];
+                            } while (choosenSpecies.MembersIdx.Count == 0);
                             (parent2, p2Fitness) = ChooseRandOrganism(choosenSpecies);
                         }
                         else
@@ -236,7 +242,7 @@ namespace Assets.Scripts.Neat
                 }
             }
 
-            foreach(var s in species)
+            foreach (var s in species)
             {
                 s.MembersIdx.Clear();
             }
@@ -253,7 +259,9 @@ namespace Assets.Scripts.Neat
         {
             var totalPotentialPopulation = 0;
             var totalAverageAdjustedFitness = species.Sum(s => s.MembersIdx.Sum(m => allNetworks[m].fitness));
-            foreach (var s in species)
+
+            var nonEmptySpecies = species.Where(s => s.MembersIdx.Count > 0).ToList();
+            foreach (var s in nonEmptySpecies)
             {
                 var speciesTotalAdjustedFitness = s.MembersIdx.Select(m => allNetworks[m].fitness).Sum();
                 s.PotentialMembersCount = (int)Math.Floor((speciesTotalAdjustedFitness / totalAverageAdjustedFitness) * startingPopulation);
@@ -263,8 +271,8 @@ namespace Assets.Scripts.Neat
             }
 
             //To make sure that we keep the same number of individuals in the population
-            totalPotentialPopulation -= species[^1].PotentialMembersCount;
-            species[^1].PotentialMembersCount = startingPopulation - totalPotentialPopulation;
+            totalPotentialPopulation -= nonEmptySpecies[^1].PotentialMembersCount;
+            nonEmptySpecies[^1].PotentialMembersCount = startingPopulation - totalPotentialPopulation;
         }
 
         private void KeepSpeciesTopMemebers(Species s)
@@ -279,12 +287,12 @@ namespace Assets.Scripts.Neat
                 var s = species[i];
                 SortSpeciesMembers(s);
 
-                //Adjust the last best fitness of the current species and remove it 
+                //Adjust the last best fitness of the current species and remove it
                 //if no improvement found over the last few generations
-                if (allNetworks[s.MembersIdx[0]].fitness <= s.LastBestFitness)
+                if (s.MembersIdx.Count == 0 || allNetworks[s.MembersIdx[0]].fitness <= s.LastBestFitness)
                 {
                     s.GenerationsSinceImprovement++;
-                    if(s.GenerationsSinceImprovement >= speciesDropoffAge)
+                    if (s.GenerationsSinceImprovement >= speciesDropoffAge && species.Count > 1)
                     {
                         Debug.Log($"<color=#{s.GetStringColor()}>Species numbered {s.Id} dropped, no improvement for {s.GenerationsSinceImprovement} generations: best fitness = {s.LastBestFitness}</color>");
                         species.RemoveAt(i);
@@ -304,7 +312,7 @@ namespace Assets.Scripts.Neat
 
         private void ComputeSpeciesAdjustedFitness(Species s)
         {
-            foreach(int memeber in s.MembersIdx)
+            foreach (int memeber in s.MembersIdx)
             {
                 allNetworks[memeber].fitness /= s.MembersIdx.Count;
             }
@@ -312,9 +320,12 @@ namespace Assets.Scripts.Neat
 
         private void SortSpeciesMembers(Species s)
         {
-            s.MembersIdx = s.MembersIdx
+            if (s.MembersIdx.Count > 0)
+            {
+                s.MembersIdx = s.MembersIdx
                 .Select(idx => allNetworks[idx])
                 .OrderByDescending(network => network.fitness).Select(network => network.index).ToList();
+            }
         }
 
         private void LogFitnessInfo()
@@ -357,7 +368,6 @@ namespace Assets.Scripts.Neat
         //    var fitneses = new float[startingPopulation];
         //    for(int i = 0; i < startingPopulation; i++)
         //    {
-                
         //        fitneses[networkRankings[i]] = startingPopulation - i;
         //    }
 
@@ -408,9 +418,9 @@ namespace Assets.Scripts.Neat
 
         private void GenerateCreatures()
         {
-            foreach(var s in species)
+            foreach (var s in species)
             {
-                foreach(int member in s.MembersIdx)
+                foreach (int member in s.MembersIdx)
                 {
                     var pos = new Vector2(UnityEngine.Random.value, UnityEngine.Random.value);
                     pos = Camera.main.ViewportToWorldPoint(pos);

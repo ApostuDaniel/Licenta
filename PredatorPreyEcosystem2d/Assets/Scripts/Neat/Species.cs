@@ -10,6 +10,7 @@ namespace Assets.Scripts.Neat
         public int PotentialMembersCount { get; set; }
         public float LastBestFitness { get; set; }
         public int GenerationsSinceImprovement { get; set; }
+        public int GenerationsSinceMemebersAssigned { get; set; }
 
         public (byte r, byte g, byte b) RgbColor { get; set; }
 

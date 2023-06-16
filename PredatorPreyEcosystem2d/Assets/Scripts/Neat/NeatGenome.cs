@@ -198,7 +198,7 @@ namespace Assets.Scripts.Neat
             }
 
             maxGeneCount = Mathf.Max(this.connectionGenes.Count, genome.connectionGenes.Count);
-            maxGeneCount = maxGeneCount > 30 ? maxGeneCount : 1;
+            maxGeneCount = maxGeneCount > 60 ? maxGeneCount : 1;
 
             return ((excessCoef * excessCount) / maxGeneCount) + ((disjointCoef * disjointCount) / maxGeneCount) + (weightDiffCoef * (totaWeightDifference / matchingCount));
         }

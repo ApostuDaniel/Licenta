@@ -24,17 +24,18 @@ public class PreyController : MonoBehaviour
     private float hitDivider = 20f;
     private float rayDistance = 20f;
 
-    private float wallLimitX = 60f;
-    private float wallLimitY = 34f;
+    //private float wallLimitX = 60f;
+    //private float wallLimitY = 34f;
 
     [Header("Energy")]
     public float totalEnergy;
     public float currentEnergy;
     public float energyForFood;
+    public float speedConsumptionMultiplier = 1.5f;
 
 
     private float[] sensors;
-    private float pastVelocity;
+    private float pastVelocity = 0f;
 
     void Awake()
     {
@@ -58,12 +59,11 @@ public class PreyController : MonoBehaviour
         pastVelocity = outputs[0];
         MovePrey(outputs[0], outputs[1]);
         UpdatePreyState();
-        
     }
 
     private void UpdatePreyState()
     {
-        currentEnergy -= Time.deltaTime + (Math.Abs(pastVelocity) * Time.deltaTime);
+        currentEnergy -= Time.deltaTime + ((Math.Abs(pastVelocity) * Math.Abs(pastVelocity) * speedConsumptionMultiplier) * Time.deltaTime);
 
         if(currentEnergy <= 0)
         {
@@ -145,6 +145,8 @@ public class PreyController : MonoBehaviour
                 else sensors[4 + i] = 1.0f;
             }
         }
+        sensors[7] = pastVelocity;
+        sensors[8] = Vector2.SignedAngle(transform.up, Vector2.up) / 180f;
 
         //sensors[7] = transform.position.x / wallLimitX;
         //sensors[8] = transform.position.y / wallLimitY;

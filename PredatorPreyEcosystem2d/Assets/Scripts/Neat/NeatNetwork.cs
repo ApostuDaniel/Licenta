@@ -119,7 +119,8 @@ namespace Assets.Scripts.Neat
             }
 
             for(int i = 1; i < layers.Count - 1; i++) {
-                ComputeLayerNodeValues(i, ModifiedSigmoidActivation);
+                //ComputeLayerNodeValues(i, ModifiedSigmoidActivation);
+                ComputeLayerNodeValues(i, TanhActivation);
             }
 
             ComputeLayerNodeValues(layers.Count - 1, TanhActivation);

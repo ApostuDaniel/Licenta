@@ -168,7 +168,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   foodPrefab: {fileID: 5721038144927993802, guid: c4ad7855c5ff3f746a11ad92d7d95f07, type: 3}
-  totalFood: 60
+  totalFood: 120
   currentFood: 0
 --- !u!1 &35843199
 GameObject:
@@ -249,8 +249,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 35843199}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 60, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 70, z: 1}
+  m_LocalPosition: {x: 81, y: 0, z: 0}
+  m_LocalScale: {x: 2, y: 92, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1979345860}
@@ -382,8 +382,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 338264930}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -60, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 70, z: 1}
+  m_LocalPosition: {x: -81, y: 0, z: 0}
+  m_LocalScale: {x: 2, y: 92, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1979345860}
@@ -472,7 +472,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 1, g: 1, b: 1, a: 0}
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -489,7 +489,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 33.7
+  orthographic size: 44.99
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -599,8 +599,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 539829883}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 34, z: 0}
-  m_LocalScale: {x: 120, y: 2, z: 1}
+  m_LocalPosition: {x: 0, y: 46, z: 0}
+  m_LocalScale: {x: 164, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1979345860}
@@ -717,19 +717,31 @@ MonoBehaviour:
   creaturePrefab: {fileID: 4964539489694872542, guid: 4310480bc09c325428eb3b256858b4e1, type: 3}
   inputNodes: 9
   outputNodes: 2
-  initWeightRange: 1
-  elitismFactor: 0.05
+  initWeightRange: 2
   mutationProb: 0.8
   weightPerturbanceProb: 0.9
-  weightReassignmentProb: 0.1
-  newNodeProb: 0.03
-  newConnectionProb: 0.05
-  perturbanceRange: 0.1
-  reassignmentRange: 1
-  startingEnergy: 12
-  energyForFood: 3
+  newNodeProb: 0.05
+  newConnectionProb: 0.07
+  perturbanceRange: 0.2
+  reassignmentRange: 2
+  inheritDisabledGeneProb: 0.75
+  chanceMutationNoCrossover: 0.25
+  interSpeciesMatingRate: 0.001
+  speciesDropoffAge: 150
+  survivalTreshold: 0.3
+  minCompatibilityTreshold: 1
+  compatibilityTreshold: 1
+  maxCompatibilityTreshold: 5
+  compatibilityModif: 0.2
+  speciesTargetCount: 8
+  excessCoef: 1
+  disjointCoef: 1
+  weightDiffCoef: 0.4
+  topMemberSelectionCutoff: 5
+  startingEnergy: 15
+  energyForFood: 4
   currentGeneration: 1
-  startingPopulation: 25
+  startingPopulation: 50
   currentPopulation: 0
 --- !u!4 &1833478288
 Transform:
@@ -825,8 +837,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1947593226}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -34, z: 0}
-  m_LocalScale: {x: 120, y: 2, z: 1}
+  m_LocalPosition: {x: 0, y: -46, z: 0}
+  m_LocalScale: {x: 164, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1979345860}
