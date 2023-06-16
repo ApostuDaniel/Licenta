@@ -1,14 +1,53 @@
 \chapter{rtNEAT}\label{rtNEAT}
-Facilisi nullam vehicula ipsum a arcu. Purus semper eget duis at tellus at. Adipiscing tristique risus nec feugiat. Eu volutpat odio facilisis mauris sit. Porta nibh venenatis cras sed. Penatibus et magnis dis parturient. Sollicitudin aliquam ultrices sagittis orci a. Senectus et netus et malesuada fames ac turpis egestas integer. Cras tincidunt lobortis feugiat vivamus at augue eget arcu dictum. Leo vel fringilla est ullamcorper eget nulla facilisi etiam dignissim. Nulla aliquet enim tortor at auctor urna nunc id cursus. Elit duis tristique sollicitudin nibh. Sagittis nisl rhoncus mattis rhoncus urna neque viverra. Convallis posuere morbi leo urna molestie at. Quisque egestas diam in arcu cursus euismod.
 
-\section{Titlul secțiunii 1}
+rtNEAT este o metoda bazata pe NEAT(vedeti capitolul \ref*{NEAT}), dezvolata de aceasi autori plus Bobby D. Bryant\cite*{rtNEAT}.
+Acesta este o adaptare a NEAT, gandit pentru jocuri, pentru evolutia retelelor neuronale in real-time, permitand agentilor controlati de ele sa se imbunatateasca in timpul desfasurarii jocului.
+Penru a demonstra acest concept de joc, a fost dezvoltat "NERO"(Neuro-Evolving Robotic Operatives)\cite*{NERO}, un joc bazat pe rtNEAT, in care un jucator antreneaza o echipa de roboti virtuali pentru a se lupta cu robotii altei echipe.
+Una dintre principalele observatii care au permist dezvoltarea rtNEAT este faptul ca intrun joc toata populatia joaca in acelasi timp, deci fitness-ul este inregistrat constant, astfel agentii tot sar putea adapta constant.
+Am considerat acest algoritm potrivit deoarece in mediul nostru virtual, ne dorim ca organismele sa evolueze si sa se adapteze in real-time, pe baza raspunsurilor pe care le primesc de la diversele interactiuni cu mediul, astfel am putea vedea o evolutie in termeni de comportamente cat si ca numar de indivizi, deoarece algoritmul NEAT reseteaza populatia la fiecare generatie.
+\\
+In cadrul rtNEAT, la fiecare $n$ intervale de timp, se executa o serie de operatie pentru inlocui un organism cu performante scazute cu copilul dintre 2 organisme mai performante, alese in mod probabilist astfel incat sa prezerve speciatia din NEAT.
 
-A diam sollicitudin tempor id eu nisl. Hac habitasse platea dictumst vestibulum. Integer enim neque volutpat ac tincidunt. Facilisi nullam vehicula ipsum a arcu cursus vitae congue. Vel turpis nunc eget lorem. Vestibulum mattis ullamcorper velit sed ullamcorper morbi tincidunt ornare. Nunc sed blandit libero volutpat. Sit amet luctus venenatis lectus magna fringilla urna porttitor. Hac habitasse platea dictumst quisque sagittis purus. Sed faucibus turpis in eu mi bibendum neque egestas. Vel orci porta non pulvinar neque laoreet suspendisse interdum consectetur. Erat nam at lectus urna duis convallis convallis tellus id. Tristique sollicitudin nibh sit amet commodo nulla facilisi nullam vehicula. Etiam dignissim diam quis enim lobortis scelerisque. Nunc congue nisi vitae suscipit tellus mauris a diam maecenas. Lacus viverra vitae congue eu consequat ac felis donec. Mauris sit amet massa vitae tortor condimentum. Mauris augue neque gravida in. Lorem ipsum dolor sit amet. Arcu dui vivamus arcu felis bibendum ut tristique et.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.25\textwidth]{images/logoFii.png}
+    \caption{Ciclul de inlocuiri in cadrul rtNEAT}
+    \label{fig:crossover}
+\end{figure}
 
-\section{Titlul secțiunii 2}
+\section{Inlocuirea agentului cel mai putin adaptat}
+Prin aceasta operatie, se inlocuieste un agent putin performant cu unul potential mai performant, dar in asa fel incat se pastreaza dinamica de speciatie din NEAT.
+Pentru asta, alegem sa eliminam agentul cu cel mai mic "fitness ajustat", deoarece daca alegerea sar face dupa cel mai rau fitness "neajustat", ar fi eliminate intii organismele din specii in care a aparut o inovatie topologica noua si care nu a avut timp sa se optimizez, astfel speciatia nu ar mai proteja inovatia.
+Fitness-ul ajustat este calculat la fel ca in cadrul NEAT, adica pentru individul $i$, $f\prime_i = \frac{f_i}{|S|}$, $|S|$ fiind numarul de indivizi din aceasi specie cu $i$.
+\\
+Trebuie deasemenea sa ne asiguram ca fiecare individ a supravetuit destul inainte sa fie eliminat, deoarece altfel ar fi eliminati mereu cei mai noi indivizi, care nu au avut timp sa acumuleze fitness.
+Din acest motiv, rtNEAT elimina doar agentii care au supravetuit minimul de timp $m$. Acest parametru e setat experimental.
+Dupa eliminarea unui agent, este important sa estimam din nou fitnessul mediu $\tilde{F}$, deoarce acesta se schimba, si este folosit in urmatorul pas al algoritmului.
 
-Sit amet mauris commodo quis imperdiet massa tincidunt nunc pulvinar. Ligula ullamcorper malesuada proin libero nunc consequat interdum. Mauris a diam maecenas sed enim ut. Ut sem nulla pharetra diam sit amet nisl suscipit adipiscing. Leo duis ut diam quam nulla. Neque ornare aenean euismod elementum. Vitae sapien pellentesque habitant morbi tristique senectus. Lectus magna fringilla urna porttitor rhoncus dolor purus non enim. Egestas sed sed risus pretium quam vulputate dignissim suspendisse in. At quis risus sed vulputate odio ut enim. Hac habitasse platea dictumst quisque sagittis. Lectus vestibulum mattis ullamcorper velit sed. Massa vitae tortor condimentum lacinia quis vel eros donec ac. Vulputate dignissim suspendisse in est ante. Sed faucibus turpis in eu mi bibendum neque. Enim eu turpis egestas pretium aenean pharetra magna. Tellus mauris a diam maecenas.
+\section{Generarea copilului}
+Din cauza ca nu generam din nou intreaga populatie la inceputul fiecarei populatii, nu poate fi utilizata formula \ref{eq:potentialMembers}, dar dinamica speciatie poate fi conservata daca alegem parintele in mod probabilist:
+\begin{equation}\label{eq:chooseParentSpecies}
+    Pr(S_k) = \frac{\overline{F_k}}{\overline{F_{tot}}}
+\end{equation} 
+adica probabilitate de a alege o specie anume pentru parinti este proportionala cu raportul dintre fitness-ul mediu al speciei si suma fitness-urilor medii pentru toate speciile.
+Noul copil este format prin crossover dintre 2 indivizi din specia aleasa plus mutatie.
+\\
+Daca folosim un prag de compatibilitate dinamic $\delta_t$, atunci nu putem face la fel ca in "NEAT", adica sa il actualizam inainte de crearea urmatoarei generatii, deoarece aproape toata populatia va ramane in aceasi specie.
+In rtNEAT, este ales un numar de inlocuiri de indivizi intre care se fac ajustari ale $\delta_t$, de exemplu la fiecare 3 inlocuiri, iar pe baza noului $\delta_t$ fiecare individ din populatie va fi repartizata din nou la una speciile existente.
 
-\section{Titlul secțiunii 3}
-
-Faucibus ornare suspendisse sed nisi lacus sed. Mi in nulla posuere sollicitudin aliquam ultrices. Lacus suspendisse faucibus interdum posuere lorem ipsum dolor sit amet. Odio tempor orci dapibus ultrices in iaculis nunc sed augue. Congue eu consequat ac felis donec et odio. Enim ut sem viverra aliquet eget sit amet. Sit amet consectetur adipiscing elit duis tristique sollicitudin. Quis blandit turpis cursus in. Cras fermentum odio eu feugiat pretium nibh ipsum consequat nisl. Non curabitur gravida arcu ac tortor dignissim convallis aenean. Porta non pulvinar neque laoreet suspendisse interdum consectetur libero id. Lacus viverra vitae congue eu consequat ac felis. Vulputate dignissim suspendisse in est ante in nibh mauris. Amet mauris commodo quis imperdiet massa. Varius sit amet mattis vulputate enim nulla aliquet. Pellentesque diam volutpat commodo sed egestas egestas. Amet est placerat in egestas erat imperdiet sed euismod. Scelerisque varius morbi enim nunc faucibus a pellentesque sit. Ut sem viverra aliquet eget sit amet tellus cras. Sem integer vitae justo eget magna fermentum iaculis eu.
+\section{Parametrii de rulare a algoritmului}
+Toti pasii algoritmului rtNEAT, pe care iam discutat mai sus, trebuie executati la intervale regulate, adica la fiecare $n$ ticuri de timp.
+Parametrul $n$ trebuie ales astfel incat rata de inlocuiere sa le permita agentilor sa supravetuiasca destul cat sa ajunga la timpul minim $m$, pentru a putea fi evaluati, adica sa treacat din statutul de neelegibili pentru inlocuire in eligibili, dar si destul de des cat sa nu se incetineasca evolutia la un grad frustrant.
+Pentru a determina parametrii potriviti, autorii au stabilit o lege a eligibilitatii, care stabileste ce proportie din populatie ne putem astept sa fie nelegibila odata ce algoritmul a trecut de primele generatii cand toata populatia este nelegibila:
+\begin{equation}\label{eq:Law Of Eligibility}
+    I = \frac{m}{|P|n}
+\end{equation}
+unde $I$ e fractia nelegibila din populatie, $m$ e durata minima de viata pe care o poate avea un individ, $n$ este numarul de ticuri intre procesele de inlocuire, iar $|P|$ numarul de indivizi in populatie.
+Practic, cu cat este mai mare populatia si numarul de ticuri intre inlocuiri, cu atat este mai greu este inlocuita populatia in intregime, deci mai putini agenti neelegibili, iar cu cat $m$ este mai mare, cu atat mai multi vor fi sub pragul eligibilitatii.
+Astfel, putem construi o formula pentru $n$:
+\begin{equation}\label{eq:formula for n}
+    n = \frac{m}{|P|I}
+\end{equation}
+Astfel, parametri pe care trebuie sa ii alegem noi raman doar $m$, $|P|$ si $I$.
+\\
+Procesele descrise pana acum permit rtNEAT sa replice dinamica NEAT, dar in real-time.

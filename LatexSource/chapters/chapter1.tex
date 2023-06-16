@@ -118,10 +118,14 @@ Ideea este de a permite indivizilor sa concureze in propria lor nisa, nu cu intr
 Pentru a detalia, topologiile similare din cadrul populatiei vor fi incadrate in specii, organismele din aceleasi specii concureaza in principal intre ele, si astfel au timp sa isi optimizeze conexiunile.
 Cum anume sunt determinate speciile si organismele din cadrul lor? Tot cu ajutorul numerelor de inovatie. 
 Numarul de gene "desjoint" si "excess" sunt un indicator bun al distantei din punct de vedere al compatibilitatii intre 2 genoame.
-Astfel, autorii NEAT au ajuns la o formula simpla care sa masoare compatibilitatea ca o distanta intre 2 structuri diferite in NEAT(notam $\delta$) in termeni de numar de gene excess $E$ si numar de gene desjoint $D$, plus media diferentei dintre genele matching $\tilde{W}$:
-\[\delta = \frac{c1*E}{N} + \frac{c2*D}{N} + c3*\tilde{W}\]
+Astfel, autorii NEAT au ajuns la o formula simpla care sa masoare compatibilitatea ca o distanta intre 2 structuri diferite in NEAT(notam $\delta$) in termeni de numar de gene excess $E$ si numar de gene desjoint $D$, plus media diferentei dintre genele matching $\overline{W}$:
+
+\begin{equation}\label{eq:compatibility}
+    \delta = \frac{c1*E}{N} + \frac{c2*D}{N} + c3*\overline{W} 
+\end{equation}
+
 Coeficientii $c1$, $c2$ si $c3$ ajusteaza importanta acestor factori, iar $N$, care reprezinta numarul de connection genes a genomului cel mai lung, normalizeaza valorile conform dimensiunii genomului.
-Prin calculul valorii $delta$ putem desfasura procesul de speciatie cu ajutorul unei valori stabilite in prealabil $\delta t$.
+Prin calculul valorii $delta$ putem desfasura procesul de speciatie cu ajutorul unei valori stabilite in prealabil, pragul de compatibilitate $\delta t$.
 Procesul de speciatie se desfasoara in urmatorul mod.
 Fiecare specie are un genom care o reprezinta. Fie un genom $g$ din generatia curenta, acesta este plasat in prima specie cu a carui reprezentant este compatibil, adica  $\delta < delta t$.
 Daca nu exista nici o specie compatibila, se formeaza una noua cu $g$ ca reprezentat al acesteia.
@@ -130,9 +134,17 @@ Daca nu exista nici o specie compatibila, se formeaza una noua cu $g$ ca repreze
 NEAT foloseste un mecanism numit \textbf{"explicit fitness sharing"} pentru a evita ca o specie sa devina prea mare si sa ajunga de dimensiunea intregii populatii.
 Practic, toate organismele din aceasi specie impartasec fitness-ul speciei lor.
 Fitness-ul ajustat al organismului $i$ este calculat prin formula:
-\[f\prime_i  = \frac{f_i}{\sum_{j = 1}^{n}sh(\delta(i,j))}\]
+
+\begin{equation}\label{eq:adjustedFitness}
+    f\prime_i  = \frac{f_i}{\sum_{j = 1}^{n}sh(\delta(i,j))}
+\end{equation}
+
 unde $f\prime_i$ e fitness-ul ajustat al individului $i$, $n$ e numarul de organimse din populatie, iar functia $sh$ are valoare 0 cand $\delta(i, j)$ este peste $\delta_t$, dar 1 altfel.
 Astfel, partea de jos a fractiei reprezinta doar numarul de indivizi din aceasi specie cu organismul $i$.
-Fiecarei specii ii este acordat un numar diferit de membri potentiali depinzand de suma a $f\prime_i$ a membrilor speciei.
+Fiecarei specii ii este acordat un numar diferit de membri potentiali depinzand de suma a $f\prime_i$ a membrilor speciei dupa formula:
+\begin{equation}\label{eq:potentialMembers}
+    n_k = \frac{\overline{F_k}}{\overline{F_{tot}}} |P|
+\end{equation}
+unde $k$ reprezinta o specie, $n_k$ e nr de membri asignati speciei, $|P|$ este numarul de indivizi in populatie, $\overline{F_k}$ este media fitnessului speciei, adica $\overline{F_k} = \sum_{i}^{} f\prime_i$, iar $\overline{F_{tot}} = \sum_{k}^{} \overline{F_k}$
 Intreaga populatie este apoi inlocuita de copii membrilor mai buni ai fiecarei specii, membrii mai slabi fiind eliminati in prealabil.
 Scopul final al speciatiei este protejare inovatiilor topologice, iar sistemul intreg cauta o solutie in cel mai rapid mod posibil, deoarece inovatii noi apar si sunt pastrate doar atunci cand e necesar.
