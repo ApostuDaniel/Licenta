@@ -168,7 +168,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   foodPrefab: {fileID: 5721038144927993802, guid: c4ad7855c5ff3f746a11ad92d7d95f07, type: 3}
-  totalFood: 120
+  totalFood: 80
   currentFood: 0
 --- !u!1 &35843199
 GameObject:
@@ -720,8 +720,8 @@ MonoBehaviour:
   initWeightRange: 2
   mutationProb: 0.8
   weightPerturbanceProb: 0.9
-  newNodeProb: 0.05
-  newConnectionProb: 0.07
+  newNodeProb: 0.03
+  newConnectionProb: 0.05
   perturbanceRange: 0.2
   reassignmentRange: 2
   inheritDisabledGeneProb: 0.75
@@ -730,10 +730,10 @@ MonoBehaviour:
   speciesDropoffAge: 150
   survivalTreshold: 0.3
   minCompatibilityTreshold: 1
-  compatibilityTreshold: 1
-  maxCompatibilityTreshold: 5
+  compatibilityTreshold: 3
+  maxCompatibilityTreshold: 7
   compatibilityModif: 0.2
-  speciesTargetCount: 8
+  speciesTargetCount: 5
   excessCoef: 1
   disjointCoef: 1
   weightDiffCoef: 0.4
@@ -741,7 +741,7 @@ MonoBehaviour:
   startingEnergy: 15
   energyForFood: 4
   currentGeneration: 1
-  startingPopulation: 50
+  startingPopulation: 35
   currentPopulation: 0
 --- !u!4 &1833478288
 Transform:

@@ -62,6 +62,15 @@ namespace Assets.Scripts.Neat
 
         private static int speciesId;
 
+        public NeatGenome GetGenome(int id)
+        {
+            return allGenomes[id];
+        }
+        public NeatNetwork GetNetwork(int id)
+        {
+            return allNetworks[id];
+        }
+
         private void Start()
         {
             allCreatures = new GameObject[startingPopulation];
@@ -331,10 +340,11 @@ namespace Assets.Scripts.Neat
         private void LogFitnessInfo()
         {
             float bestFitness = allNetworks.Max(n => n.fitness);
-            NeatNetwork bestNetwork = allNetworks.First(n => n.fitness >= bestFitness);
+            int bestIndex = Array.FindIndex(allNetworks, network => network.fitness == bestFitness);
+            
             float averageFitness = allNetworks.Sum(x => x.fitness) / allNetworks.Length;
-            int bestHiddenNodes = bestNetwork.neatGenome.nodeGenes.Count - (bestNetwork.neatGenome.InNodes + bestNetwork.neatGenome.OutNodes);
-            int bestConnectionGenes = bestNetwork.neatGenome.connectionGenes.Count;
+            int bestHiddenNodes = allGenomes[bestIndex].nodeGenes.Count - (allGenomes[bestIndex].InNodes + allGenomes[bestIndex].OutNodes);
+            int bestConnectionGenes = allGenomes[bestIndex].connectionGenes.Count;
 
             using var writer = new StreamWriter(logFileName, true);
             using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
@@ -349,13 +359,13 @@ namespace Assets.Scripts.Neat
             csv.NextRecord();
         }
 
-        private void MutateGeneration()
-        {
-            foreach (var genome in allGenomes)
-            {
-                genome.Mutate(inovationManger, mutationProb, weightPerturbanceProb, newNodeProb, newConnectionProb, perturbanceRange, reassignmentRange);
-            }
-        }
+        //private void MutateGeneration()
+        //{
+        //    foreach (var genome in allGenomes)
+        //    {
+        //        genome.Mutate(inovationManger, mutationProb, weightPerturbanceProb, newNodeProb, newConnectionProb, perturbanceRange, reassignmentRange);
+        //    }
+        //}
 
         //private void SelectGeneration()
         //{
@@ -444,7 +454,8 @@ namespace Assets.Scripts.Neat
         {
             for (int i = 0; i < startingPopulation; i++)
             {
-                allNetworks[i] = new NeatNetwork(allGenomes[i])
+                var genome = allGenomes[i];
+                allNetworks[i] = new NeatNetwork(genome)
                 {
                     index = i
                 };

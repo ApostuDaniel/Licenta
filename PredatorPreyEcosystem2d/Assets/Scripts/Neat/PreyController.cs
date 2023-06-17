@@ -35,7 +35,7 @@ public class PreyController : MonoBehaviour
 
 
     private float[] sensors;
-    private float pastVelocity = 0f;
+    private float pastVelocity;
 
     void Awake()
     {
@@ -147,8 +147,5 @@ public class PreyController : MonoBehaviour
         }
         sensors[7] = pastVelocity;
         sensors[8] = Vector2.SignedAngle(transform.up, Vector2.up) / 180f;
-
-        //sensors[7] = transform.position.x / wallLimitX;
-        //sensors[8] = transform.position.y / wallLimitY;
     }
 }

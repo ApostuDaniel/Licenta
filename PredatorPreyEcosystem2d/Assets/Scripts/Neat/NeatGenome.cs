@@ -1,15 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Assets.Scripts.Neat
 {
     public class NeatGenome
     {
-        public enum TYPE { Input,  Output, Hidden }
+        public enum TYPE
+        { Input, Output, Hidden }
 
         public List<NodeGene> nodeGenes;
         public List<ConnectionGene> connectionGenes;
@@ -24,7 +22,6 @@ namespace Assets.Scripts.Neat
 
         //    foreach (NodeGene nodeGene in nodeGenes)
         //    {
-
         //        switch (nodeGene.type)
         //        {
         //            case TYPE.Input: InNodes++; break;
@@ -48,7 +45,7 @@ namespace Assets.Scripts.Neat
 
             CopyNodes(genome);
 
-            foreach(var conGene in genome.connectionGenes)
+            foreach (var conGene in genome.connectionGenes)
             {
                 var inNode = nodeGenes[conGene.inNode.id];
                 var outNode = nodeGenes[conGene.outNode.id];
@@ -56,21 +53,20 @@ namespace Assets.Scripts.Neat
             }
         }
 
-        public NeatGenome(int inputNodes,  int outputNodes, float weightRange = 1f) : this(inputNodes, outputNodes)
+        public NeatGenome(int inputNodes, int outputNodes, float weightRange = 1f) : this(inputNodes, outputNodes)
         {
             InitiateRandomWeightsGenome(weightRange);
         }
 
         public void Mutate(InovationManger inovManager, float mutationProb, float weightPerturbanceProb, float newNodeProb, float newConnectionProb, float perturbanceRange, float reassignmentRange)
         {
-
             var shouldMutate = Random.value;
             var shouldAddNode = Random.value;
             var shouldAddConnection = Random.value;
 
             if (shouldMutate <= mutationProb)
             {
-                foreach(var gene in connectionGenes)
+                foreach (var gene in connectionGenes)
                 {
                     var shouldPerturb = Random.value;
 
@@ -85,11 +81,11 @@ namespace Assets.Scripts.Neat
                 }
             }
 
-            if(shouldAddNode <= newNodeProb)
+            if (shouldAddNode <= newNodeProb)
             {
                 InnovateNode(inovManager);
             }
-            if(shouldAddConnection <= newConnectionProb)
+            if (shouldAddConnection <= newConnectionProb)
             {
                 InnovateConnection(inovManager, reassignmentRange);
             }
@@ -113,9 +109,9 @@ namespace Assets.Scripts.Neat
                     idx1++;
                     idx2++;
                 }
-                else if(p1Gene.inovationNr < p2Gene.inovationNr)
+                else if (p1Gene.inovationNr < p2Gene.inovationNr)
                 {
-                    if(p1Fitness >= p2Fitness)
+                    if (p1Fitness >= p2Fitness)
                     {
                         child.AddCopyOfGene(p1Gene);
                     }
@@ -131,13 +127,14 @@ namespace Assets.Scripts.Neat
                 }
             }
 
-            if(idx1 < this.connectionGenes.Count && p1Fitness >= p2Fitness) {
-                for ( int i = idx1; i < this.connectionGenes.Count; i++)
+            if (idx1 < this.connectionGenes.Count && p1Fitness >= p2Fitness)
+            {
+                for (int i = idx1; i < this.connectionGenes.Count; i++)
                 {
                     child.AddCopyOfGene(this.connectionGenes[i]);
                 }
             }
-            else if(idx2 < parent2.connectionGenes.Count && p2Fitness > p1Fitness)
+            else if (idx2 < parent2.connectionGenes.Count && p2Fitness > p1Fitness)
             {
                 for (int i = idx2; i < parent2.connectionGenes.Count; i++)
                 {
@@ -221,11 +218,59 @@ namespace Assets.Scripts.Neat
 
         private bool InnovateConnection(InovationManger inovManager, float reassignmentRange)
         {
-            
+            var maxConnections = this.nodeGenes.Count * this.nodeGenes.Count;
+            if (connectionGenes.Count > maxConnections)
+            {
+                return false;
+            }
+
+            var madeConnection = false;
+            while (!madeConnection)
+            {
+                var node1 = nodeGenes[Random.Range(0, nodeGenes.Count)];
+                var node2 = nodeGenes[Random.Range(0, nodeGenes.Count)];
+
+                if (!HasConnection(node1, node2))
+                {
+                    var newConn = new ConnectionGene(node1, node2, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
+                    {
+                        inovationNr = inovManager.GetInv(node1.id, node2.id)
+                    };
+                    connectionGenes.Add(newConn);
+                    madeConnection = true;
+                }
+            }
+
+            return madeConnection;
+        }
+
+        private void InnovateNode(InovationManger inovManager)
+        {
+            //Find random enabled connection
+            var enabledConnections = connectionGenes.FindAll(gene => gene.isEnabled);
+            if (enabledConnections.Count == 0) return;
+
+            var geneToSplit = enabledConnections[Random.Range(0, enabledConnections.Count)];
+            geneToSplit.isEnabled = false;
+
+            NodeGene newNode = new(nodeGenes.Max(ng => ng.id) + 1, TYPE.Hidden);
+            nodeGenes.Add(newNode);
+
+            var conn1 = new ConnectionGene(geneToSplit.inNode, newNode, 1f, true, 0);
+            var conn2 = new ConnectionGene(newNode, geneToSplit.outNode, geneToSplit.weight, true, 0);
+            conn1.inovationNr = inovManager.GetInv(geneToSplit.inNode.id, newNode.id);
+            conn2.inovationNr = inovManager.GetInv(newNode.id, geneToSplit.outNode.id);
+
+            connectionGenes.Add(conn1);
+            connectionGenes.Add(conn2);
+        }
+
+        private bool InnovateConnectionFeedForward(InovationManger inovManager, float reassignmentRange)
+        {
             List<int> hiddenNodes = Enumerable.Range(InNodes + OutNodes, nodeGenes.Count - (InNodes + OutNodes)).ToList();
             Utils.Shuffle(hiddenNodes);
 
-            foreach(var hiddenNodeIdx in hiddenNodes)
+            foreach (var hiddenNodeIdx in hiddenNodes)
             {
                 NodeGene node1 = nodeGenes[hiddenNodeIdx];
 
@@ -237,10 +282,11 @@ namespace Assets.Scripts.Neat
                 foreach (var nodeIdx in allNodes)
                 {
                     NodeGene node2 = nodeGenes[nodeIdx];
-         
+
                     if (HasConnection(node1, node2)) continue;
 
-                    switch(node2.type) {
+                    switch (node2.type)
+                    {
                         case TYPE.Input:
                             var newConnToHidden = new ConnectionGene(node2, node1, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
                             {
@@ -248,6 +294,7 @@ namespace Assets.Scripts.Neat
                             };
                             connectionGenes.Add(newConnToHidden);
                             return true;
+
                         case TYPE.Output:
                             var newConnToOutput = new ConnectionGene(node1, node2, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
                             {
@@ -255,6 +302,7 @@ namespace Assets.Scripts.Neat
                             };
                             connectionGenes.Add(newConnToOutput);
                             return true;
+
                         case TYPE.Hidden:
                             ConnectionGene newConnHiddenToHidden;
                             if (IsAncestorOf(node1, node2))
@@ -273,6 +321,7 @@ namespace Assets.Scripts.Neat
                             }
                             connectionGenes.Add(newConnHiddenToHidden);
                             return true;
+
                         default:
                             throw new System.Exception("Encountered NodeGene that is neither type Input, Output or Hidden");
                     }
@@ -292,27 +341,6 @@ namespace Assets.Scripts.Neat
         private bool HasConnection(NodeGene node1, NodeGene node2)
         {
             return connectionGenes.Any(con => (con.inNode == node1 && con.outNode == node2) || (con.inNode == node2 && con.outNode == node1));
-        }
-
-        private void InnovateNode(InovationManger inovManager)
-        {
-            //Find random enabled connection
-            var enabledConnections = connectionGenes.FindAll(gene => gene.isEnabled);
-            if (enabledConnections.Count == 0) return;
-
-            var geneToSplit = enabledConnections[Random.Range(0, enabledConnections.Count)];
-            geneToSplit.isEnabled = false;
-
-            NodeGene newNode = new(nodeGenes[^1].id + 1, TYPE.Hidden);
-            nodeGenes.Add(newNode);
-
-            var conn1 = new ConnectionGene(geneToSplit.inNode, newNode, 1f, true, 0);
-            var conn2 = new ConnectionGene(newNode, geneToSplit.outNode, geneToSplit.weight, true, 0);
-            conn1.inovationNr = inovManager.GetInv(geneToSplit.inNode.id, newNode.id);
-            conn2.inovationNr = inovManager.GetInv(newNode.id, geneToSplit.outNode.id);
-
-            connectionGenes.Add(conn1);
-            connectionGenes.Add(conn2);
         }
 
         private void InitiateRandomWeightsGenome(float weightRange)
@@ -367,6 +395,4 @@ namespace Assets.Scripts.Neat
             this.type = type;
         }
     }
-
-
 }
