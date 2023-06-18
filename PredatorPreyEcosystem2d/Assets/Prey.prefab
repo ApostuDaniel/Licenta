@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5297544602435293068}
   - component: {fileID: 2205626675780206955}
   - component: {fileID: 8280416460777195283}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Prey
   m_TagString: Prey
   m_Icon: {fileID: 0}
@@ -132,9 +132,25 @@ MonoBehaviour:
   smoothingFactor: 0.1
   inputNodes: 9
   outputNodes: 2
+  spriteColor: {r: 0, g: 0, b: 0, a: 0}
   totalEnergy: 20
   currentEnergy: 0
   energyForFood: 5
+  speedConsumptionMultiplier: 0
+  viewDistance: 0
+  wallRayDistance: 0
+  viewAngle: 0
+  angleSplits: 0
+  fowTargetsMask:
+    serializedVersion: 2
+    m_Bits: 0
+  sensors: []
+  preyMask:
+    serializedVersion: 2
+    m_Bits: 0
+  predatorMask:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!50 &8280416460777195283
 Rigidbody2D:
   serializedVersion: 4

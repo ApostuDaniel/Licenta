@@ -429,6 +429,7 @@ namespace Assets.Scripts.Neat
 
         private void GenerateCreatures()
         {
+            var foodMask = LayerMask.GetMask("Food");
             foreach (var s in species)
             {
                 foreach (int member in s.MembersIdx)
@@ -446,6 +447,8 @@ namespace Assets.Scripts.Neat
                     creatureController.totalEnergy = startingEnergy;
                     creatureController.energyForFood = energyForFood;
 
+                    creatureController.fowTargetsMask = foodMask;
+                    creatureController.wallRayDistance = 20f;
                     creatureController.viewDistance = 20f;
                     creatureController.viewAngle = 90f;
                     creatureController.angleSplits = 3;
@@ -481,7 +484,7 @@ namespace Assets.Scripts.Neat
             }
         }
 
-        public void RegisterDeath()
+        public void RegisterDeath(CreatureController.DeathCause deathCause)
         {
             currentPopulation--;
         }
