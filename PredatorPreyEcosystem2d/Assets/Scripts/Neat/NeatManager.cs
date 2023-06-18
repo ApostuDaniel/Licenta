@@ -58,18 +58,12 @@ namespace Assets.Scripts.Neat
 
         public int currentPopulation;
 
+        [Header("Logging")]
         private string logFileName;
+        public bool isLoggindEnabled = true;
 
         private static int speciesId;
 
-        public NeatGenome GetGenome(int id)
-        {
-            return allGenomes[id];
-        }
-        public NeatNetwork GetNetwork(int id)
-        {
-            return allNetworks[id];
-        }
 
         private void Start()
         {
@@ -82,12 +76,15 @@ namespace Assets.Scripts.Neat
             //as such there are inputNodes * outputNodes connections at the start, starting from 0, so the next innovation number will be the connection count
             inovationManger = new InovationManger(inputNodes * outputNodes);
 
-            logFileName = $"Logs\\Fitness\\fitness_log_{DateTime.Now.Ticks}.csv";
-            using (var fs = File.Create(logFileName)) { }
-            using var writer = new StreamWriter(logFileName);
-            using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
-            csv.WriteHeader<FitnessLog>();
-            csv.NextRecord();
+            if(isLoggindEnabled)
+            {
+                logFileName = $"Logs\\Fitness\\fitness_log_{DateTime.Now.Ticks}.csv";
+                using (var fs = File.Create(logFileName)) { }
+                using var writer = new StreamWriter(logFileName);
+                using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+                csv.WriteHeader<FitnessLog>();
+                csv.NextRecord();
+            }
 
             InitializeGenomes();
             GenerateNetworks();
@@ -99,7 +96,10 @@ namespace Assets.Scripts.Neat
             if (currentPopulation <= 0)
             {
                 RespawnFood();
-                LogFitnessInfo();
+                if(isLoggindEnabled) {
+                    LogFitnessInfo();
+                }
+                
                 ProduceNextGeneration();
             }
         }
@@ -112,7 +112,7 @@ namespace Assets.Scripts.Neat
 
         private void ProduceNextGeneration()
         {
-            inovationManger.ResetForNextGeneration();
+            //inovationManger.ResetForNextGeneration();
             AdjustCompatibiltyTreshold();
             ComputeAllSpeciesAdjustedFitness();
             AdjustAllSpeciesPotentialMemeberCount();
@@ -141,7 +141,7 @@ namespace Assets.Scripts.Neat
             {
                 var genome = allGenomes[i];
                 var potentialSpecies = species.Find(s => s.Id == genome.speciesHint);
-                var distanceFromSpecies = potentialSpecies == null ? 100f : potentialSpecies.SpeciesRepresentative.ComputeDistance(genome, excessCoef, disjointCoef, weightDiffCoef);
+                var distanceFromSpecies = potentialSpecies == null ? 1000f : potentialSpecies.SpeciesRepresentative.ComputeDistance(genome, excessCoef, disjointCoef, weightDiffCoef);
                 if (potentialSpecies != null && distanceFromSpecies < compatibilityTreshold)
                 {
                     potentialSpecies.MembersIdx.Add(i);
@@ -267,13 +267,12 @@ namespace Assets.Scripts.Neat
         private void AdjustAllSpeciesPotentialMemeberCount()
         {
             var totalPotentialPopulation = 0;
-            var totalAverageAdjustedFitness = species.Sum(s => s.MembersIdx.Sum(m => allNetworks[m].fitness));
+            var totalAverageAdjustedFitness = species.Sum(s => s.SpeciesAdjustedFitness);
 
             var nonEmptySpecies = species.Where(s => s.MembersIdx.Count > 0).ToList();
             foreach (var s in nonEmptySpecies)
             {
-                var speciesTotalAdjustedFitness = s.MembersIdx.Select(m => allNetworks[m].fitness).Sum();
-                s.PotentialMembersCount = (int)Math.Floor((speciesTotalAdjustedFitness / totalAverageAdjustedFitness) * startingPopulation);
+                s.PotentialMembersCount = (int)Math.Floor((s.SpeciesAdjustedFitness / totalAverageAdjustedFitness) * startingPopulation);
                 totalPotentialPopulation += s.PotentialMembersCount;
 
                 KeepSpeciesTopMemebers(s);
@@ -321,10 +320,12 @@ namespace Assets.Scripts.Neat
 
         private void ComputeSpeciesAdjustedFitness(Species s)
         {
+            s.SpeciesAdjustedFitness = 0;
             foreach (int memeber in s.MembersIdx)
             {
-                allNetworks[memeber].fitness /= s.MembersIdx.Count;
+                s.SpeciesAdjustedFitness += allNetworks[memeber].fitness;
             }
+            s.SpeciesAdjustedFitness /= s.MembersIdx.Count == 0 ? 1 : s.MembersIdx.Count;
         }
 
         private void SortSpeciesMembers(Species s)
@@ -444,6 +445,10 @@ namespace Assets.Scripts.Neat
                     creatureController.outputNodes = outputNodes;
                     creatureController.totalEnergy = startingEnergy;
                     creatureController.energyForFood = energyForFood;
+
+                    creatureController.viewDistance = 20f;
+                    creatureController.viewAngle = 90f;
+                    creatureController.angleSplits = 3;
                     (var r, var g, var b) = s.RgbColor;
                     creatureController.spriteColor = new Color32(r, g, b, 255);
                 }

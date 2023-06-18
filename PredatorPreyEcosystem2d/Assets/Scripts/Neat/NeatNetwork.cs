@@ -19,7 +19,6 @@ namespace Assets.Scripts.Neat
         private  List<int> inputs;
         private  List<int> outputs;
         private readonly Dictionary<int, Node> nodes;
-        public readonly NeatGenome tempGenome;
 
         public NeatNetwork(NeatGenome neatGenome)
         {
@@ -27,7 +26,6 @@ namespace Assets.Scripts.Neat
             nodes = new Dictionary<int, Node>();
             inputs = new List<int>();
             outputs = new List<int>();
-            tempGenome = neatGenome;
             ConstructNetwork(neatGenome);
         }
 
