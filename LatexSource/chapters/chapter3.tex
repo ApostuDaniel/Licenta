@@ -9,12 +9,12 @@ Structura scenei a fost inspirata din proiectul "Simulated Fish Ecosystem"\cite*
 
 \section{Vizualizarea principala}
 In mod implicit, inainte sa dam start oricarei simulari, in mediu avem 2 structuri principale: camera(\textbf{Main Camera}) si peretii(\textbf{Walls}).
-\textbf{Main Camera} stabileste dimensiunea \textbf{Game view}-ului (poate fi vazut ca preview in coltul de dreapta jos a  imaginii \ref*{fig:mainCameraView}, unde deasemenea putem vedea cu o linie gri subtire marginea view-ului), cat si culoarea din background.
+\textbf{Main Camera} stabileste dimensiunea \textbf{Game view}-ului (poate fi vazut ca preview in coltul de dreapta jos a  imaginii \ref{fig:mainCameraView}, unde deasemenea putem vedea cu o linie gri subtire marginea view-ului), cat si culoarea din background.
 Pentru view-ul prezentat de camera nu avem o dimensiune standard, deoarece o schimbam depinzand de cantitatea de mancare si de cate creaturi vrem sa folosim in cadrul unei simularii, insa pastram un aspect de imagine constant de 16:9.
-Obiectul "Walls" este compus din 4 pereti(reprezentati ca segmente albe in cadrul imaginii \ref*{fig:mainCameraView}): \textbf{WallUp}, \textbf{WallRight}, \textbf{WallDown} si \textbf{WallLeft}.
+Obiectul "Walls" este compus din 4 pereti(reprezentati ca segmente albe in cadrul imaginii \ref{fig:mainCameraView}): \textbf{WallUp}, \textbf{WallRight}, \textbf{WallDown} si \textbf{WallLeft}.
 Acestia sunt obiecte statice, care nu se misca in timpul simularilor.
 Dimensiunea lor deasemenea nu este standard, dar la scalare menținem acelasi aspect de imagine precum camera.
-Fiecare dintre pereti are atasat un \textbf{Box Collider 2D} care este setat ca fiind Trigger, pentru a detecta coliziunile cu alte obieicte, si un \textbf{Rigidbody 2D} static plus tag-ul "Wall", pentru a putea fi detectati prin intermediul \textbf{Raycast}(detalii in sectiunea \ref*{Senzori}).
+Fiecare dintre pereti are atasat un \textbf{Box Collider 2D} care este setat ca fiind Trigger, pentru a detecta coliziunile cu alte obieicte, si un \textbf{Rigidbody 2D} static plus tag-ul "Wall", pentru a putea fi detectati prin intermediul \textbf{Raycast}(detalii in sectiunea \ref{Senzori}).
 Atunci cand scalam peretii pentru diferite experimente o facem astfel incat marginile interioare ale peretilor sa fie inafara marginilor view-ului camerei, deoarece la generarea cu coordonate aleatorii ale mancarii si ale creaturilor, aceastea sunt generate intre marginile game view-ului, iar peretii fiind inafara lui evitam generarea obiectelor in pereti.
 
 \begin{figure}[h]
@@ -25,7 +25,7 @@ Atunci cand scalam peretii pentru diferite experimente o facem astfel incat marg
 \end{figure}
 
 \section{Mâncarea}
-Obiectele din ciclul de generare a mancarii sunt 2, \textbf{Food (Prefab asset)}(componente in imaginea \ref*{fig:foodPrefab}) si \textbf{FoodManager}.
+Obiectele din ciclul de generare a mancarii sunt 2, \textbf{Food (Prefab asset)}(componente in imaginea \ref{fig:foodPrefab}) si \textbf{FoodManager}.
 \textbf{Food Prefab} reprezinta schema dupa care se construieste o bucata de energie.
 Bucatile de energie se gasesc pe harta sub forma de discuri de culoare galbena, mai exact \#F6F800.
 Acestea, ca si peretii, reprezint obiecte statice care odata create nu se misca.
@@ -107,4 +107,29 @@ Pentru a scrie vizulizare in "Editor View" a senzorului "FoW" un mare ajutor a f
 In unul din experimentele de la capitolul \ref{Rezultate}, vom arata ca prada care foloseste senzorul "FoW" este superioara celei care foloseste "Fork", si vom prezenta si diferentele de comportament intre cele 2 tipur de prada.
 Pentru pradatori la senzori nu se schimba nimic decat tintele cautate, acestea fiind creaturile de prada.
 
-\subsection*{Acumulare de energie}
+\subsection*{Coleziuni}
+Datorita faptului ca toate obiectele care intereactioneaza in cadrul scenei au asociat cate un collider si un rigidbody, putem detecta coleziunile intre ele.
+Procesare acestor coleziuni se face in cadrul script-uri-lor "Prey Controller" si "Predator Controller", asociate prefab-ului "Prey" si respectiv "Predator".
+Prin intermediul tag-urilor "Wall" si "Food", script-ul "Prey Controller" inregistreaza coleziunile cu peretii, ceea ce cauzeaza moartea prazii, si coleziunea cu fragmentele de energie, prin care energia asociata fragmentului este absorbita, iar fragmentul prin functia "DieAndRespawn" este regenerat la alte coordonate aleatorii in cadrul scenei, deci cantitatea de energie in scena este constanta.
+Procesare coleziunilor prada-pradator are loc in script-ul "Predator Controller", si pot fi identificate prin tag-ul asociat creaturilor de prada, "Prey". In cadrul acestor coleziuni, obiectul prada este distrus, insa obiectul pradator primeste energie, intr-o cantitate semnificativ mai mare decat ce primesc creaturile prada la coleziunile prada-fragment de energie, plus un procent din energia acumulata de prada de-a lungul vietii.
+Facem aceste ajustari deoarece vanatul pentru prada este mult mai usor decat cel pentru pradator,pentru ca pradatorii trebuie sa dezvolte comportamente de chassing, astfel ca prdatorii ar trebui sa primeasca mai multa energie din vanat pentru a ne asigura ca acestia nu sunt surclasati de prada in cadrul evolutiei.
+Coleziunile pradator-perete sunt la fel ca la prada, insa pradatorii nu inregistreaza coleziunile cu fragmentele de energie, deoarece vrem ca acestia sa obtina energie doar prin coleziunile cu prada.
+Pe tot parcursul vietii lor, creaturile consuma energie in mod constant, plus o cantitate care depinde de viteza cu care se misca. Astfel le incurajam sa acumuleze energie incontinuu.
+Odata ce o creatura ramane fara energie, aceasta moare.
+
+\section{Managementul Algoritmului}
+\textbf{NeatManager}, ca si FoodManger, este un "Empty Object" pe care il folosim pentru a atasa script-ul "Neat Manager".
+Acest script este responsabil de desfasurare algoritmului Neat, deci are ca responsabilitati generarea populatiei initiale, inregistrarea mortilor, crearea generatiilor urmatoare si inregistrarea de log-uri despre populatie pe parcursul generatiilor.
+In cadrul NeatManager putem decide sa efectuam experimente in care folosim doar creaturile de prada, sau si pradatorii, si putem determina paramteri cum ar fi numarul de membri, numarul de noduri pentru stratul de intrare si cel de iesire etc.(vom discuta mai pe larg multimea de parametri in sectiunea \ref{SetariExperimentale}). 
+Faza de generare a populatiiei initiale se desfasoara in urmatorul mod:
+\begin{enumerate}
+    \item Se genereaza genomul initial pentru fiecare membru din populatie(reprezinta o codificare Neat a unei retele cu structura minima dar cu ponderi ale conexiunilor aleatorii, revedeti sectiunea \ref{InitializareNeat})
+    \item Se genereaza fenotipul pentru fiecare genotip(reteaua neuronala propriu-zisa, vom expune maparea de la fenotip la genotip in capitolul \ref{DetaliiImplementare})
+    \item Se creaza agentii simularii, dupa prefab-ul care a fost asignat catre NeatManager. Proprietatile acestora sunt setate dupa parametrii NeatManager pentru un prefab specific, si sunt pozitionati la coordonate aleatorii in cadrul "Main Camera View", fiecaruia dintre ei fiindui asignata si una dintre retele create la pasul precedent.
+\end{enumerate}
+Dupa creare, agentii sunt liberi sa exploreze mediul si sa acumuleze fitness. In sectiunea anterioara nu am mentionat ca in toate scenariile in care un agent moare, asta fiind valabil atat pentru prada cat si pentru pradatori, acesta isi inregistreaza moartea si cauza ei la "NeatManager", prin intermediul functiei "RegisterDeath".
+Astfel, NeatManager poate determina cand toti agentii din mediu au fost distrusi, si poate incepe crearea urmatoarei generatii.
+Inainte de crearea urmatoarei generatii, se log-eaza fitness-ul average si fitness-ul celui mai bun agent din generatia curenta, plus informatii despre structura celui mai bun agent.
+Procesul de generare a urmatoarei generatii decurge la fel ca cel de initializre, doar ca mai intai se aplica o filtrare pentru a ramane doar genom-urile cele mai bune din cadrul fiecarei specii, care vor trece prin procesul de crossover si de mutatie pentru generarea genomurilor generatiiei viitoare.
+Aceste genom-uri sunt asignate catre diferite specii din populatie, care grupeaza genomuri similare. Dupa acest pas se creaza noile retele neuonale, si se genereaza noii agenti care gandesc prin intermediul  acestora, iar tot procesul se repeta din nou la fiecare generatie.
+Ne-am permis in aceasta sectiune sa facem un rezumat al functionarii algoritmului, vorbind despre obiectul care este responsabil de desfasurarea lui, insa in capitolul \ref{DetaliiImplementare} vom expune detaliat, cu exemple din cod, procesele din cadrul algoritmului.
