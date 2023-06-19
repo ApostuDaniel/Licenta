@@ -1,11 +1,110 @@
 \chapter{Mediul Virtual}\label{MediulVirtual}
+In acest capitol vom descrie mediul Unity in care se desfasoara simulara.
+O scena in Unity este compusa din o multime de \textbf{GameObjects}, care interactioneaza intre ele in timpul jocului, sau care prezinta doar aspecte estetice.
+\begin{wrapfigure}{l}{0.25\textwidth} %this figure will be at the right
+	\includegraphics[width=0.25\textwidth]{images/scene_structure.png}
+\end{wrapfigure}
+Mai departe vom prezenta obiectele din cadrul simularii, proprietatile lor, si cum interactioneaza cu celelalte obiecte din mediu.
+Structura scenei a fost inspirata din proiectul "Simulated Fish Ecosystem"\cite*{ZolphiteNeatYoutube}.
 
-Amet venenatis urna cursus eget. Quam vulputate dignissim suspendisse in est ante. Proin nibh nisl condimentum id. Egestas maecenas pharetra convallis posuere morbi. Risus viverra adipiscing at in. Vulputate eu scelerisque felis imperdiet. Cras adipiscing enim eu turpis egestas pretium aenean pharetra. In aliquam sem fringilla ut morbi tincidunt augue. Montes nascetur ridiculus mus mauris. Viverra accumsan in nisl nisi scelerisque eu ultrices vitae. In nibh mauris cursus mattis molestie a iaculis. Interdum consectetur libero id faucibus nisl tincidunt eget. Gravida in fermentum et sollicitudin ac orci. Suscipit adipiscing bibendum est ultricies. Etiam non quam lacus suspendisse. Leo urna molestie at elementum eu facilisis sed odio morbi. Egestas congue quisque egestas diam in arcu cursus. Amet consectetur adipiscing elit ut aliquam purus.
+\section{Vizualizarea principala}
+In mod implicit, inainte sa dam start oricarei simulari, in mediu avem 2 structuri principale: camera(\textbf{Main Camera}) si peretii(\textbf{Walls}).
+\textbf{Main Camera} stabileste dimensiunea \textbf{Game view}-ului (poate fi vazut ca preview in coltul de dreapta jos a  imaginii \ref*{fig:mainCameraView}, unde deasemenea putem vedea cu o linie gri subtire marginea view-ului), cat si culoarea din background.
+Pentru view-ul prezentat de camera nu avem o dimensiune standard, deoarece o schimbam depinzand de cantitatea de mancare si de cate creaturi vrem sa folosim in cadrul unei simularii, insa pastram un aspect de imagine constant de 16:9.
+Obiectul "Walls" este compus din 4 pereti(reprezentati ca segmente albe in cadrul imaginii \ref*{fig:mainCameraView}): \textbf{WallUp}, \textbf{WallRight}, \textbf{WallDown} si \textbf{WallLeft}.
+Acestia sunt obiecte statice, care nu se misca in timpul simularilor.
+Dimensiunea lor deasemenea nu este standard, dar la scalare menținem acelasi aspect de imagine precum camera.
+Fiecare dintre pereti are atasat un \textbf{Box Collider 2D} care este setat ca fiind Trigger, pentru a detecta coliziunile cu alte obieicte, si un \textbf{Rigidbody 2D} static plus tag-ul "Wall", pentru a putea fi detectati prin intermediul \textbf{Raycast}(detalii in sectiunea \ref*{Senzori}).
+Atunci cand scalam peretii pentru diferite experimente o facem astfel incat marginile interioare ale peretilor sa fie inafara marginilor view-ului camerei, deoarece la generarea cu coordonate aleatorii ale mancarii si ale creaturilor, aceastea sunt generate intre marginile game view-ului, iar peretii fiind inafara lui evitam generarea obiectelor in pereti.
 
-\section{Titlul secțiunii 1}
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.75\textwidth]{images/unity_camera-view.png}
+	\caption{Main camera view din Unity}
+	\label{fig:mainCameraView}
+\end{figure}
 
-Eros donec ac odio tempor. Facilisi morbi tempus iaculis urna id volutpat. Faucibus in ornare quam viverra orci sagittis eu. Amet tellus cras adipiscing enim eu turpis egestas. Integer feugiat scelerisque varius morbi. Platea dictumst vestibulum rhoncus est pellentesque elit ullamcorper dignissim. Bibendum arcu vitae elementum curabitur. Eu nisl nunc mi ipsum faucibus. Id aliquet lectus proin nibh nisl condimentum id venenatis a. Cras adipiscing enim eu turpis egestas pretium. Quisque non tellus orci ac auctor augue mauris augue. Malesuada pellentesque elit eget gravida cum. Ut lectus arcu bibendum at. Massa id neque aliquam vestibulum morbi blandit. Posuere ac ut consequat semper viverra nam. Viverra adipiscing at in tellus integer feugiat scelerisque varius morbi. Morbi enim nunc faucibus a pellentesque sit amet porttitor eget. Eu feugiat pretium nibh ipsum consequat nisl vel. Nisl purus in mollis nunc sed.
+\section{Mâncarea}
+Obiectele din ciclul de generare a mancarii sunt 2, \textbf{Food (Prefab asset)}(componente in imaginea \ref*{fig:foodPrefab}) si \textbf{FoodManager}.
+\textbf{Food Prefab} reprezinta schema dupa care se construieste o bucata de energie.
+Bucatile de energie se gasesc pe harta sub forma de discuri de culoare galbena, mai exact \#F6F800.
+Acestea, ca si peretii, reprezint obiecte statice care odata create nu se misca.
+\textbf{Food Prefab} are asociate urmatoarele componente:
+\begin{itemize}
+	\item \textbf{Circle Colider 2D} permite detectarea coliziunilor cu Obiectul
+	\item \textbf{Rigidbody 2D} permite ca obiectul sa poata fi lovit de Raycasts
+	\item \textbf{Food Controller} un script C\# care controleaza distrugerea obiectului.
+\end{itemize}
+Obiectele construite prin FoodPrefab au scala de 1 pe axa X, Y si Z, si sunt asociate cu tag-ul "Food" pentru a permite detectia lor prin Raycasts si coleziuni.
+De asemenea, ele sunt asociate cu \textbf{"Layer"}-ul "Food" pentru a permite detectia lor de catre senzorul "Field of View"(sectiunea \ref{Senzori}).
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.5\textwidth]{images/food_prefab.png}
+	\caption{Componentele Prefab-ului Food}
+	\label{fig:foodPrefab}
+\end{figure}
 
-\section{Titlul secțiunii 2}
+\textbf{FoodManager} este un "Empty Object", al carui singur scop este sa fie un obiect permanent in aplicatie de care putem atasa un script.
+Scriptul pentru \textbf{FoodManager} ne permite sa asociem acestuia un "Prefab", in cazul acesta \textbf{Food Prefab},
+iar scriptul ne ofera functii pentru a crea un obiect sau mai multe din "Prefab-ul" asociat, si ne permite si sa le distrugem pe toate.
+In \textbf{Food Controller}, scriptul pentru \textbf{FoodPrefab}, functia "DieAndRespawn" permite distrugerea obiectului Food si regenerarea sa in alta locatie in mediu, printr-un apel la FoodManger.
+Astfel putem pastra numarul de bucati de energie constant in mediu, chiar daca energia este colectata in continuu de speciile de prada.
 
-Elementum sagittis vitae et leo duis ut diam quam nulla. Purus sit amet volutpat consequat mauris nunc. Tincidunt augue interdum velit euismod in pellentesque massa. Nunc sed augue lacus viverra vitae congue. Porttitor leo a diam sollicitudin. Faucibus pulvinar elementum integer enim. Adipiscing bibendum est ultricies integer quis auctor elit. Blandit aliquam etiam erat velit scelerisque in. A iaculis at erat pellentesque adipiscing commodo elit at. Erat nam at lectus urna duis. Consequat ac felis donec et. Fermentum posuere urna nec tincidunt praesent semper feugiat nibh sed. Proin gravida hendrerit lectus a. Pretium viverra suspendisse potenti nullam ac tortor vitae purus. Arcu cursus euismod quis viverra nibh cras pulvinar mattis. Gravida arcu ac tortor dignissim convallis aenean. Quam nulla porttitor massa id neque aliquam vestibulum morbi. Sed viverra ipsum nunc aliquet. Quis enim lobortis scelerisque fermentum dui faucibus in.
+\section{Creaturile}
+In mediul nostru virtual avem doua tipuri de creaturi, \textbf{Prada} si \textbf{Pradator}, care pot fi construite prin intermediul \textbf{Prey (Prefab Asset)} si respectiv \textbf{Predator (Prefab Asset)}.
+In aceasta vom enunta in mare parte proprietatile pentru \textbf{Prey Prefab}, deoarece cele 2 prefaburi au multe elemente comune, deci pentru \textbf{Predator Prefab} vom expune doar diferentele.
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.5\textwidth]{images/prey_prefab.png}
+	\caption{Componentele Prefab-ului Prey}
+	\label{fig:preyPrefab}
+\end{figure}
+
+Prefab-ul pentru Prey defineste urmatoarele componente:
+\begin{itemize}
+    \item \textbf{Sprite Renderer}: Definim forma creaturilor prey ca fiind un triunghi, scalat la dimensiunea de 1.5 pe axa x si Y
+    \item \textbf{Polygon Collider 2D}: Un Collider care ia forma sprite-ului, folosit pentru detectarea coleziunilor
+    \item \textbf{Rigidbody 2D}: Necesar pentru detectarea coleziunilor, pentru ca detectarea coleziuniulor se va face in cadrul obiectelor dinamice: Prey si Predator. 
+    Este de tip "Kinematic", spre deosebire de static pentru obiectele statice, si permite detectarea coleziunilor kineamtic/static si kinematic/kinematic.
+    \item \textbf{Prey Controller}: script C\#, mosteneste clasa \textbf{Creature Controller}, care incapsuleaza trasaturi comune atat pentru prey cat si pentru predator. Defineste miscarea, senzorii, acumularea de energie si moartea pentru obiecte Prey.
+\end{itemize}
+
+\subsection*{Miscarea}
+Micarea este definita de schimbari care au loc asupra vitezei si a unghiului de rotatie al creaturii. O creatura se poate deplasa doar in fata sau in spate, dar aplicand rotatii asupra proprietatii "transform.eulerAngles" se poate schimba directia in care aceasta merge.
+Schimbarile asupra vitezei si a rotatiei obiectului sunt determinate de o retea neuronala asociata obiectului, care primeste ca input un numar de valori senzor, si returneaza doua valori in intervalul (-1, 1), prima fiind modificarea asupra acceleratiei iar a doua modificarea asupra rotatiei.
+Acest proces are loc in functia "FixedUpdate()", deci la fiecare schimbare de frame stratul de intrare se incarca cu valorile senzorilor, se executa pasul de feed-forward iar valorile din stratul de iesire sunt folosite pentru a modifica pozitia creaturii.
+
+\subsection*{Senzori}\label{Senzori}
+In mod implicit, toate creaturile au urmatorii senzori:
+\begin{itemize}
+    \item \textbf{Bias}: este un senzor care are mereu valoarea 1, folosit pentru a adauga bias la nodurile care creaza o conexiune cu el.
+    \item \textbf{Perete}: acesta este un singur senzor, definit de un Raycast in fata obiectului(in planul 2D, aceasta reprezinta directia "up" pentru proprietatea "transform" a obiectului). 
+    Un raycast reprezinta proiectarea unei raze invizibile de o anumita lungime dintr-un punct, pe o directie in scena.
+    Cand aceasta loveste collider-ul unui alt obiect din scena, este returnat un obiect din clasa "RaycastHit2D"(pentru mediul nostru 2D), care poate fi analizat pentru a determina ce tip de obiect a fost lovit(prin intermediul tag-ului) obiectului, si distanta de la punctul de pornire la care a fost lovit.
+    Pentru senzorul de pereti, daca raycast-ul loveste un perete, valoarea sa va fi raportul dintre distanta pana la lovitura si lungimea razei(deci, intre 0 si 1). Daca nu a fost detectat un perete, valoarea senzorului e 1.  
+    \item \textbf{Viteza curenta}: valoarea senzorului este valoarea precedenta a iesirii pentru "viteza" a retelei neuronale.
+    \item \textbf{Unghi}: unghiul curent, exprimat intre -1 si 1, dintre directia inainte a creaturii si axa $Y$ a scenei.
+\end{itemize}
+Pentru detectia tintelor creaturilor(adica a surselor de energie pentru fiecare tip in parte, pradatorii detecteaza creaturi de tipul prada, iar prada detecteaza bucatile de energie), am folosit in timp 2 tipuri de senzori.
+Cel mai simplu reprezinta un sistem format din 3 Raycast-uri, o sa il numim \textbf{fork} pentru a ne referi la el mai departe, care actioneaza la fel ca senzorul implicit pentru perete, doar ca in loc sa detectez pereti, detecteaza tintele creaturii.
+Un raycast este proiectat pe directia inainte a obiectului, iar celelalte doua la un unghi de $45^{\circ}$ respectiv $-45^{\circ}$ fata de aceasi directie.
+\\
+Ulterior am dezvoltat un senzor mai complex, de tip "Field of View", al carui concept vine din \cite{rtNEAT}, sectiunea 5, figure 10, unde sunt descrisi mai multi senzori printre care si "Enemy Radars".
+Acesta descrie divizarea spatiului de $360^{\circ}$ din jurul agentului in mai multe zone. Fiecare zona activeaza un senzor in dependenta de cat de apropiat este un inamic de agent. Daca sunt mai multi inamici in aceasi zona, se sumeaza activarile pentru fiecare inamic in parte.
+\begin{figure}[ht]
+	\centering
+	\animategraphics[autoplay,loop,width=\textwidth]{20}{images/sensors_showcase/sensors_showcase-}{9}{111}
+	\caption{Senzorul FoV si senzorul pentru perete din cadrul prazii, liniile colorate arata distnata pana la fragmentele de energie care sunt detectate de diferitele zone ale senzorului. Linia alba atunci cand prada se apropie de perete este raycast-ul catre perete}
+    \label{fig:senzorDemo}
+\end{figure}
+
+In cadrul implementarii noastre, pentru senzorul "Field of View"(\textbf{FoV}), alegem un unghi, intre 0 si 180 de grade, care reprezinta campul vizual din fata unei creaturi, si raza pana la care acesta se extinde.
+Prin alt parametru, specificam in cate zone se imparte acesta. 
+Prin intermediul metodei "Physics2D.OverlapCircleAll", se detecteaza toate tintele din cadrul unui cerc din jurul creaturii, dupa care, analizand unghiul dintre directia inainte a creaturii si pozitia unei tinte, putem determina daca tintele cad in cadrul campului vizual, si in ce zona a campului.
+Pentru fiecare zona, activarea ei va reprezenta valoarea calculului $\sum_{i} 1 - d_i/r$, $i$ fiind o tinta din cadrul zonei, $d_i$ distanta pana la tinta, iar $r$ raza cercului in care are loc detectia. Deci pentru fiecare tinta avem o activarea intre 0 si 1, care este mai mare cu cat tinta e mai aproape de creatura.
+In cadrul animatiei \ref{fig:senzorDemo}, se poate vedea cum functioneaza senzorul "FoW", cu un camp vizual de $90^{\circ}$, impartit in 3 zone, pe o distanta de 20 "world units", iar la sfarsitul animatie putem vedea si o vizualizare a raycast-ului pentru senzorul de perete.
+Pentru a scrie vizulizare in "Editor View" a senzorului "FoW" un mare ajutor a fost \cite{FoWVisualization}.
+In unul din experimentele de la capitolul \ref{Rezultate}, vom arata ca prada care foloseste senzorul "FoW" este superioara celei care foloseste "Fork", si vom prezenta si diferentele de comportament intre cele 2 tipur de prada.
+Pentru pradatori la senzori nu se schimba nimic decat tintele cautate, acestea fiind creaturile de prada.
+
+\subsection*{Acumulare de energie}
