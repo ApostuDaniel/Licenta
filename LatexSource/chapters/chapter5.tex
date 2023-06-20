@@ -1,1 +1,64 @@
-\chapter{Setari experimentale}\label{SetariExperimentale}
+\chapter{Parametrii experimentali}\label{SetariExperimentale}
+In acest capitol vom descrie in primul rand parametrii tuturor obiectelor din cadrul scenei care pot influenta simularea.
+Ulterior vom descrie setul de simulari, scopul fiecareia, si setul de parametri care le definesc.
+\section{Main Camera si Walls}
+\begin{itemize}
+    \item \texttt{Size} : schimba marimea GameView-ului prezentat de camera, si deci schimba si marimea zonei in care se genereaza fragmente de energie si creaturi.
+    \item \texttt{Wall transform}: peretii doar trebuie scalati si repozitionati astfel incat sa inchida complet spatiul din interior, dar sa fie putin inafara view-ului camerei principale.
+\end{itemize}
+
+\section{FoodManager}
+\begin{itemize}
+    \item \texttt{Food Prefab}: prefab-ul obiectului ce va fi folosit pe post de mancare
+    \item \texttt{Total Food}: numar intreg ce reprezinta cate obiect Food Prefab vor fi generate si pozitionate in scena. Acest numar ramane constant pe parcursul unei simulari.
+\end{itemize}
+
+\section{Prey si Predator}
+\begin{itemize}
+    \item \texttt{Acceleration Factor}: un factor ce scaleaza viteza unei creaturi, care in mod implicit e intre -1 si 1.
+    \item \texttt{Turn Factor}: cu cate grade se poate roti o creatura intr-o directie.
+    \item \texttt{Smoothing Factor}: factor ce afecteaza fluiditatea miscarilor, atat a rotatiilor cat si a deplasarilor inainte si inapoi.
+    \item \texttt{Network}: reteau atribuita creaturii.
+    \item \texttt{InputNodes}: numarul de noduri din stratul de intrarea al retelei.
+    \item \texttt{OutputNodes}: numarul de noduri din stratul de iesire al retelei.
+    \item \texttt{Total Energy}: cantitate de energie atribuita creaturii initial.
+    \item \texttt{Energy For Food}: cata energie este obtinuta la coliziunea cu o sursa de mancare.
+    \item \texttt{Speed Consumption Multiplier}: un factor ce scaleaza consumul de energie al creaturii in dependenta de viteza cu care aceasta se misca.
+    \item \texttt{View Distance}: parametru al senzorului "FoW", stabileste raza din jurul creaturii in care se pot detecta tintele.
+    \item \texttt{View Angle}: parametru al "FoW", stabileste unghiul din fata creaturii in care sunt detecatate tintele.
+    \item \texttt{Angle Splits}: parametru al "FoW", stabileste in cate zone egale de detectie este impartit \textbf{View Angle}.
+    \item \texttt{Fow Targets Mask}: parametru al "FoW", stabileste pe ce Layer va avea loc detectia, adica care sunt tintele senzorului.
+    \item \texttt{Wall Ray Distance}: parametru al senzorului de detectie a peretelui, stabileste distanta pe care este proiectat Raycast-ul.
+    \item \texttt{Sprite Color}: culoarea sprite-ului atasat creaturii.
+\end{itemize}
+
+\section{NeatManager}
+\begin{itemize}
+    \item \texttt{Creature Prefab}: Prefab-ul din care se vor construi membrii popoulatiei
+    \item \texttt{Input Nodes}: numarul de noduri pentru stratul de intrare al retelelor
+    \item \texttt{Output Nodes}: numarul de noduri pentru stratul de intrare al retelelor
+    \item \texttt{Init Weight Range}: valoare $x$ care defineste intervalul [$-x$, $x$], intre care vor fi initializate ponderile retelelor.
+    \item \texttt{Mutation Prob}: probabilitatea ca un genom sa sufere mutatii la aplicare operatorului de mutatie.
+    \item \texttt{Weight Perturbance Prob}: probabilitate $p$ a fiecarei gene de conexiune din genom de a suferi o perturbare. Probabilitate ca unei ponderi sa ii fie reatribuite o valoare aleatorie e $1-p$.
+    \item \texttt{Perturbance Range}: valoare $x$ care defineste intervalul [$-x$, $x$], intre care se alege o valoare aleatorie pentru perturbarea unei ponderi.
+    \item \texttt{Reassignment Range}: valoare $x$ care defineste intervalul [$-x$, $x$], intre care se alege o valoare aleatorie folosita pentru resetarea ponderii.
+    \item \texttt{New Node Prob}: probabilitatea ca unui genom sa ii fie aplicat mutatia structurala de adaugare a unui nou nod.
+    \item \texttt{New Connection Prob}: probabilitatea ca unui genom sa ii fie aplicat mutatia structurala de adaugare a unei noi conexiuni.
+    \item \texttt{Inherid Disabled Gene Prob}: probabilitatea in cadrul crossover, daca una dintre doua gene aliniate "matching" este dezactivat, copilul va mosteni o gena dezactivata.
+    \item \texttt{Chance Mutation No Crossover}: probabilitate ca un nou membru din populatie sa nu fie generat prin crossover, ci doar prin operatorul de mutatie aplicat nodului parinte
+    \item \texttt{Inter Species Mating Rate}: probabilitate in timpul ca operatii de crossover ca al doilea parinte sa fie ales dintr-o specie aleatorie
+    \item \texttt{Species Dropoff Age}: numarul de generatii pe care o specie il poate supravetui daca aceasta nu prezinta imbunatatiri ale fitness-ului celui mai bun membru.
+    \item \texttt{Survival Treshold}: procentul din membrii cei mai buni ai unei specii care sunt pastrati pentru crearea genom-urilor populatiei din generatia viitoare.
+    \item \texttt{Species Target Count}: Numarul tinta de specii in cadrul populatiei.
+    \item \texttt{Compatibility Treshold}: pragul de compatibilitate $\delta_t$. Daca distanta de compatibilitate dintre doua genom-uri este mai mare decat aceasta valoare, atunci genom-urile fac parte din specii diferite.
+    \item \texttt{Min Compatibility Treshold}: valoarea minima pentru pragul de compatibilitate
+    \item \texttt{Max Compatibility Treshold}: valoarea maxima a pragului de compatibilitate
+    \item \texttt{Compatibility Modif}: valoare cu care este modificat pragul de compatibilitate, daca suntem sub numarul tinta de specii, $\delta_t$ va scadea cu atat la fiecare generatie, iar daca suntem peste numarul tinta, $\delta_t$ va creste cu atat.
+    \item \texttt{Excess Coef}: valoarea $c1$ din formula \ref{eq:compatibility}
+    \item \texttt{Disjoint Coef}: valoarea $c2$ din formula \ref{eq:compatibility}
+    \item \texttt{Weight Diff Coef}: valoarea $c3$ din formula \ref{eq:compatibility}
+    \item \texttt{Top Members Selection Cutoff}: daca o specie are mai mult de atatia membri, atunci genomul celui mai bun membru al speciei va trece in urmatoarea generatie fara ai fi aplicati operatorii de crossover sau de mutatie.
+    \item \texttt{Starting Energy}: cantitatea de energie cu care incepe fiecare membru din populatie.
+    \item \texttt{Energy For Food}: cata energie este obtinuta la coliziunea creaturii cu o sursa de mancare.
+    \item \texttt{Starting Population}: cate creaturi sunt in populatia initiala a fiecarei generatii.
+\end{itemize}
