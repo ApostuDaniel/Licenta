@@ -1,12 +1,110 @@
 \chapter{Detalii de implementare}\label{DetaliiImplementare}
+In cadrul algoritmului NEAT, expus in \cite{NEAT} sunt expuse in mod teoretic inovatiile aduse de NEAT ca algoritm de Neuro-Evolutie, insa nu avem o implementare a lor, cum ar fi, de exemplu, generarea numerelor de inovatie.
+In acest capitol vom concretiza aspecte putin expuse in NEAT, aspecte care tin doar de de simulare, precum si imbunatatiri sau schimbari propuse mai tarziu pe "The NEAT Users Page"\cite{NeatFAQ}, in sectiunea "Neat Software FAQ".
 
-\begin{lstlisting}[caption={Test caption}]
-    private void CreateNewSpecies(int genomeIdx)
+\section{Genomul in NEAT}
+Structura genomului in NEAT este foarte simpla, si intuitiv de implementat, la fel si operatiile din cadrul mutatiei, care implica perturbarea ponderilor conexiunilor, resetare ponderilor cu noi valori aleatorii, adaugarea de noi noduri si adaugarea de conexiuni, descrise bine in "Figure 3" din \cite{NEAT}.
+In cadrul operatiei de crossover, deasemenea, prin intermediul fitnessului este usor sa intelegem genele carui parinte vor fi mostenite de copil.
+Totusi, pentru operatia de aliniere a genom-urilor parintilor, exemplul din "Figure 4" din \cite{NEAT} nu este destul de bun, deoarece el ascunde complexitatile operatiei in cazul in care genele matching nu sunt toate la inceput-ul fiecaruia dintre parinti, ci se pot gasi si printe genele "disjoint".
+
+\begin{lstlisting}[caption={Parcurgerea genom-urilor celor 2 parinti pentru alinierea lor in cadrul crossover. Prin "this" sunt accesate campurile primului parinte}, label={lst:aliniere}]
+    int idx1 = 0, idx2 = 0;
+    while (idx1 < this.connectionGenes.Count && idx2 < parent2.connectionGenes.Count)
     {
-        var s = new Species(speciesId++);
-        s.MembersIdx.Add(genomeIdx);
-        s.SpeciesRepresentative = allGenomes[genomeIdx];
-        species.Add(s);
-        Debug.Log($"<color=#{s.GetStringColor()}>New Species created with id {s.Id}</color>");
+        var p1Gene = this.connectionGenes[idx1];
+        var p2Gene = parent2.connectionGenes[idx2];
+        if (p1Gene.inovationNr == p2Gene.inovationNr)
+        {
+            child.AddMatchingGene(p1Gene, p2Gene, inheritDisabledGeneProb);
+            idx1++;
+            idx2++;
+        }
+        else if (p1Gene.inovationNr < p2Gene.inovationNr)
+        {
+            if (p1Fitness >= p2Fitness)
+            {
+                child.AddCopyOfGene(p1Gene);
+            }
+            idx1++;
+        }
+        else
+        {
+            if (p2Fitness > p1Fitness)
+            {
+                child.AddCopyOfGene(p2Gene);
+            }
+            idx2++;
+        }
+    }
+
+    if (idx1 < this.connectionGenes.Count && p1Fitness >= p2Fitness)
+    {
+        for (int i = idx1; i < this.connectionGenes.Count; i++)
+        {
+            child.AddCopyOfGene(this.connectionGenes[i]);
+        }
+    }
+    else if (idx2 < parent2.connectionGenes.Count && p2Fitness > p1Fitness)
+    {
+        for (int i = idx2; i < parent2.connectionGenes.Count; i++)
+        {
+            child.AddCopyOfGene(parent2.connectionGenes[i]);
+        }
     }
 \end{lstlisting}
+
+Solutia noastra, expusa in \ref*{lst:aliniere}, propune folosirea a 2 indexi pentru parcurgerea ambelor genomuri in acelasi timp. Daca pentru pozitia curenta a indexilor ambele gene au numere de inovatie egale, avansam ambii indexi, daca parintele 1 are numarul de inovatie mai mare, avansam indexul parintelui 2, deoarece este posbil ca la urmatoare pozitie genele sa fie matching, iar altfel, avansam index-ul pentru parintele 1.
+Daca ajungem la sfarsit si genomul unui parinte sa terminat inaintea celuilat, inseamna ca restul genelor din parintele care nu sa epuizat sunt exces.
+Aceasi aliniere o facem si in cadrul operatiei de calcul al distante $\delta$ dintre 2 genom-uri, doar ca in loc sa asignam gena unui sau a altui parinte la copilul ce se formeaza, contorizam genele "matching", cele disjoint si cele "excess".
+
+\section{Retelele neuronale din NEAT}
+Retelel neuronale din NEAT reprezinta retele neuronale recurente. Acestea au cicluri care pot porni din straturile adanci ale retelei spre cele din fata, cum ar fi de la cele de intrare la cele de iesire, si nu este garantat ca fiecare nod dintr-un strat va fi conectat la fiecare nod din urmatorul, deci reprezentarea si evaluarea din cadrul retelelor dense feed-forward nu poate fi aplicata aici.
+Lucrarea \cite{NEAT} nu are specificatii pentru generarea retelelor, inafara de faptul ca genele de conexiune setate ca disabled nu ar trebui sa fie exprimate in fenotip, adica in retea.
+\begin{lstlisting}[caption={Structura pe clase a unei retele NEAT}, label={lst:neatNetworkStructure}]
+public class NeatNetwork
+{
+    public float fitness;
+    public int index;
+    private enum CycleDetection { Unverified, Verified, Cycle }
+    private readonly List<int> evalOrder;
+    private  List<int> inputs;
+    private  List<int> outputs;
+    private readonly Dictionary<int, Node> nodes;
+    ...
+}
+
+internal class Node
+{
+    public int id;
+    public float value;
+    public List<Connection> inputConnections;
+    public List<Connection> outputConnections;
+    ...
+}
+
+internal class Connection
+{
+    public int inNode;
+    public int outNode;
+    public float weight;
+    ...
+}
+\end{lstlisting}
+O retea, dupa cum am listat in \ref{lst:neatNetworkStructure}, are urmatoarele componente:
+\begin{itemize}
+    \item \textbf{fitness}: stocheaza fitness-ul unui agent din populatie odata cu moartea sa.
+    \item \textbf{index}: un id al retelei asignat de catre NeatManager.
+    \item \textbf{nodes}: un dictionar constituit din perechi de id-uri ale nodurilor si noduri. Contine toate nodurile necesare retelei, iar fiecare nod are propriile liste de conexiuni cu alte noduri.
+    \item \textbf{evalOrder}: o lista de id-uri de noduri, reprezentand ordinea in care nodurile ar trebui evaluate in retea pentru a obtine un output corect.
+    \item \textbf{inputs si outputs}: liste cu id-urile nodurilor de intrare, respectiv de iesire.
+    \item \textbf{CycleDetection}: un enum ce va fi folosit pentru stabilirea conexiunilor care formeaza un ciclu in retea.
+\end{itemize}
+
+Prin stabilirea unei ordini de evaluare a nodurilor din retea la crearea retelei, evaluarea va putea avea loc simplu si rapid, ceea ce e importanta deoarece o retea va fi evaluata de foarte multe ori pe parcursul vietii sale, la fiecare frame al simularii.
+Pentru generare unei retele RNN din genotip, vom trece prin 4 pasi:
+\begin{enumerate}
+    \item Filtrarea conexiunilor enabled si crearea nodurilor necesare pentru conexiuni.
+    \item Detectarea ciclurilor din cadrul retelei, ne referim la conexiunile care completeaza un ciclu.
+    \item Eliminarea structurilor care nu sunt conectate la nici un nod de intrare, acestea nu primesc date de la senzori, deci sunt redundante si nu aduc nici un beneficiu retelei.
+    \item Stabilire unei ordini de evaluare a nodurilor, cu ajutorul informatiei despre cicluri pe care o avem de la pasul 2.
+\end{enumerate}
