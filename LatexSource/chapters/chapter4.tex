@@ -108,3 +108,160 @@ Pentru generare unei retele RNN din genotip, vom trece prin 4 pasi:
     \item Eliminarea structurilor care nu sunt conectate la nici un nod de intrare, acestea nu primesc date de la senzori, deci sunt redundante si nu aduc nici un beneficiu retelei.
     \item Stabilire unei ordini de evaluare a nodurilor, cu ajutorul informatiei despre cicluri pe care o avem de la pasul 2.
 \end{enumerate}
+
+Pentru prima rutina, intii cream nodurile care corespund straturilor de intrare si celor de iesire pe care le adaugam in \texttt{nodes}.
+Ulterior, pentru fiecare "connection gene" care nu este dezactivata, verificam daca nodul de intrare si cel de iesire sunt prezente in \texttt{nodes}, altfel, le cream si le adaugam.
+Prin informatia din "connection gene", putem construi un nou obiect "Connection", iar aceasta conexiune o adaugam in lista de \texttt{outputConnections} pentru nodul de intrare, si cea de \texttt{inputConnections} pentru nodul de iesire.
+Astfel, fiecare nod stie cu ce alte noduri este conectat, ponderea conexiunilor si directia conexiunilor. Pastram si o lista a tuturor conexiunilor create care va fi folosita la pasul urmator.
+\\
+In pasul 2, pentru determinarea nodurilor ce formeaza cicluri, folosim algoritmul \ref{lst:DetectCycles}.
+\begin{lstlisting}[caption={Algoritmul de detectare a conexiunilor ce formeaza cicluri}, label={lst:DetectCycles}]
+private Dictionary<Connection, (CycleDetection verification, bool mark)> DetectCycles(List<Connection> connections)
+{
+    Dictionary<Connection, (CycleDetection verification, bool mark)> verificationDictionary = new();
+    connections.ForEach(conn => verificationDictionary.Add(conn, (CycleDetection.Unverified, false)));
+    foreach (var nodeId in inputs)
+    {
+        var currRoute = new List<int>() { nodeId };
+        ExploreRouteCiclicity(currRoute, verificationDictionary);
+    }
+
+    return verificationDictionary;
+}
+
+private void ExploreRouteCiclicity(List<int> route, Dictionary<Connection, (CycleDetection verification, bool mark)> verificationDictionary)
+{
+    foreach (var conn in nodes[route[^1]].outputConnections)
+    {
+        if (verificationDictionary[conn].verification == CycleDetection.Unverified)
+        {
+            if (route.Contains(conn.outNode))
+            {
+                verificationDictionary[conn] = (CycleDetection.Cycle, false);
+            }
+            else
+            {
+                verificationDictionary[conn] = (CycleDetection.Verified, false);
+                ExploreRouteCiclicity(new List<int>(route) { conn.outNode }, verificationDictionary);
+            }
+        }
+    }
+}
+\end{lstlisting}
+Ideea este sa initializam un dictionar unde cheile sunt conexiunile, deoarece ele sunt unice, iar valorile sunt statusul verificarii conexiunii(initial toate conexiunile sunt marcate ca fiind unverified), plus un marcaj ce va fi folosit la pasul 4.
+Dupa care, pentru fiecare nod de intrare, incepem o cautare "Depth-first search"(DFS). Practic exploram toate conexiunile de iesire a nodului curent, iar pentru conexiunile care sunt marcate ca neverificate, daca nodul de iesire al conexiunii este deja prezent in ruta pe care am parcurso pentru a ajunge la nodul curent, insemna ca am gasit un ciclu, si marcam conexiunea in acest sens, altfel, marcam conexiunea ca fiind verificata, iar nodul de iesire al conexiunii este adaugat in ruta ca fiind nodul curent si continuam explorarea.
+Totusi, daca analizam un exemplu de retea cum ar fi cel din imaginea \ref{fig:extraStructuresRnn}, vedem ca nu toate conexiunile sunt verificate.
+Verificarile incep de la fiecare nod din stratul de intrare in parte, deci o conexiune care ramane neverificata este una la care nu ajung prin nici o cale informatiile din stratul de intrare. 
+Astfel, structurile neconectate pot fi sterse fara sa afecteze in nici un mod evaluarea retelei, ci chiar faciliteaza procesul de stabilire a ordinii de evaluare a nodurilor.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/extra_structures_rnn.png}
+    \caption{Un exmplu de retea dupa verificarea ciclicitatii conexiunilor. Sagetile verzi sunt conexiunile cu starea de verified, cele rosii au starea de cycle, insa putem vedea ca conexiunea 5-4 ramane unverified(sageata neagra), datorita faptului ca nu este conectata la nici un input.}
+    \label{fig:extraStructuresRnn}
+\end{figure}
+Procesul de eliminare al structurilor redundnate este simplu: fiecare conexiune ramasa in starea unverified va fi stearsa din dictionarul de verificari, si din listele nodurilor pe care le conecteaza, dupa care este parcurs dictionarul \texttt{nodes} si sunt eliminate toate nodurile ascunse care nu au nici o conexiune de input.
+Ultima parte, stabilirea ordinii de evaluare a nodurilor este expusa in listing-ul \ref{lst:EstablishEvalOrder}.
+Logica acestei operatii este urmatoare: un nod poate fi evaluat odata ce au fost evaluate toate nodurile cu care el este conectat prin lista de conexiuni \texttt{inputConnections}, cu exceptia nodurilor de intrare ce sunt conectate de  nodul curent prin conexiuni ciclu, deoarece de la aceste nodul curent va lua valoarea lor de la evaluarea anterioara.
+Astfel, la inceput, aceasta conditie este indeplinita doar de o parte din nodurile de intrare, care nu au \texttt{inputConnections} sau care au doar cicluri.
+Definim o lista, \texttt{currOrder} in care punem nodurile care indeplinesc aceasta conditie, iar intro bucla, pana cand toate nodurile sunt incluse in \texttt{evalOrder}:
+\begin{enumerate}
+    \item Cu ajutorul \texttt{verificationDictionary}, pentru fiecare nod din \texttt{currOrder}, schimbam marcajul conexiunilor sale de iesire din $false$ in $true$.
+    \item Cream o lista goala next.
+    \item Pentru fiecare nod care a ramas sa fie asignat ordinii: daca toate conexiunile sale de intrare sunt cicluri sau sunt marcate true, asta insemnand ca nodul de intrare indicat de conexiune a fost deja adaugat in ordinea de evaluare, deci in timpul evaluarii valoarea sa ar fi deja calculata, nodul curent poate fi adaugat in lista next.
+    \item Adaugam la \texttt{evalOrder} nodurile din \texttt{currOrder}, iar noul \texttt{currOrder} va fi lista next.
+\end{enumerate}
+Astfel, gradual, la fiecare iteratie a buclei, nodurile care pot fi evaluate cu informatia valabila la moment for fi adaugate in ordinea de evaluare, pana cand aceeasta este completata cu toate nodurile retelei.
+
+\begin{lstlisting}[caption={Functia de determinare a ordinii de evaluare a nodurilor}, label={lst:EstablishEvalOrder}]
+private void EstablishEvalOrder(Dictionary<Connection, (CycleDetection verification, bool mark)> verificationDictionary)
+{
+    var remaining = nodes.Keys.ToList();
+
+    var currOrder = inputs.Where(nodeId => nodes[nodeId].inputConnections.All(conn => verificationDictionary[conn].verification == CycleDetection.Cycle)).ToList();
+    foreach (var node in currOrder)
+    {
+        remaining.Remove(node);
+    }
+
+    while (remaining.Count > 0)
+    {
+        foreach (var nodeId in currOrder)
+        {
+            foreach (var con in nodes[nodeId].outputConnections)
+            {
+                if (verificationDictionary[con].verification == CycleDetection.Verified)
+                {
+                    verificationDictionary[con] = (CycleDetection.Verified, true);
+                }
+            }
+        }
+
+        var next = new List<int>();
+        for(int i = 0; i < remaining.Count; i++)
+        {
+            var nodeId = remaining[i];
+            if (nodes[nodeId].inputConnections.All(conn => verificationDictionary[conn].mark || verificationDictionary[conn].verification == CycleDetection.Cycle))
+            {
+                next.Add(nodeId);
+                remaining.RemoveAt(i);
+                i--;
+            }
+        }
+
+        evalOrder.AddRange(currOrder);
+        currOrder = next;
+    }
+
+    evalOrder.AddRange(currOrder);
+}
+\end{lstlisting}
+
+\section{Algoritmul NEAT}
+Responsabil de executia algoritmului NEAT in cadrul proiectului nostru este script-ul "NeatManager.cs" atasat obiectului NeatManager din scena.
+Cea mai mare parte a algortmului este integrate in cadrul functiei \texttt{ProduceNextGeneration()}(De vazut listing-ul \ref{lst:ProduceNextGeneration})
+
+\begin{lstlisting}[caption={Generarea urmatoarei generatii}, label={lst:ProduceNextGeneration}]
+private void ProduceNextGeneration()
+{
+    //inovationManger.ResetForNextGeneration();
+    AdjustCompatibiltyTreshold();
+    ComputeAllSpeciesAdjustedFitness();
+    AdjustAllSpeciesPotentialMemeberCount();
+    GenerateNextGenGenomes();
+    SpeciesRepartition();
+    GenerateNetworks();
+    GenerateCreatures();
+    currentGeneration++;
+}
+\end{lstlisting}
+
+O sa observati ca prima linie este comentata: de ce? In cadrul implementarii noastre, \texttt{InovationManger} este o clasa  a carei obiecte ne permit sa tinem cont de inovatiile ce apar in genom-urile populatie in urma mutatiilor structurale.
+In pagina \cite{NeatFAQ}, este adresata intrebarea daca ar trebuie sa pastram inregistraile noilor inovatii doar pentru generatia curenta sau pe tot parcursul algoritmului.
+Ca raspuns Keneth O. Stanley precizeaza ca efectul principal al pastrarii numerelor de inovatie pe toat parcursul algoritmului este ca se vor genera mai putine specii, dar nu a definit o metoda ca fiind mai buna ca alta, asta depinzand de experiment.
+In cadrul simulatorului nostru totusi, pastrarea permanenta a numerelor de inovatie a produs rezultate mai bune, din acest motiv linia 3 este comentata, pentru a nu reseta inregistrarile la fiecare generatie.
+\\
+Functia \texttt{AdjustCompatibiltyTreshold} deasemenea este inspirata din unul din raspunsurile de pe pagina \cite{NeatFAQ}, anume daca exista o metoda pentru selecta in mod automat pragul de compatibilitate $\delta_t$ pentru speciatie.
+Aceasta metoda implica setare unui numar tinta de specii in cadrul algoritmului, iar acest pragul de compatibilitate va scadea daca avem mai putin specii decat numarul tinta, sau va creste dca sunt prea multe specii.
+In cadrul implementarii proprii am setat un  minim si un maxim pentru acest prag, si o valoare prin care pragul se modifica la inceputul fiecarei generatii(vedeti \ref{lst:AdjustCompatibiltyTreshold}).
+\begin{lstlisting}[caption={Ajustarea pragului de compatibilitate}, label={lst:AdjustCompatibiltyTreshold}]
+private void AdjustCompatibiltyTreshold()
+{
+    if (currentGeneration > 1)
+    {
+        if (species.Count < speciesTargetCount && compatibilityTreshold > minCompatibilityTreshold) compatibilityTreshold -= compatibilityModif;
+        else if (species.Count > speciesTargetCount && compatibilityTreshold < maxCompatibilityTreshold) compatibilityTreshold += compatibilityModif;
+
+        if (compatibilityTreshold < minCompatibilityTreshold) compatibilityTreshold = minCompatibilityTreshold;
+        if (compatibilityTreshold > maxCompatibilityTreshold) compatibilityTreshold = maxCompatibilityTreshold;
+    }
+}
+\end{lstlisting}
+In \texttt{ComputeAllSpeciesAdjustedFitness()} se intimpla urmatoarele operatii: pentru fiecare specie, sunt sortati membrii fiecare speciei dupa fitness-ul retelei lor, se determina daca exista o imbunatatire a celei mai bun fitness al speciei de pana acum, si in caz contrar daca nu a existat o imbunatatire timp de prea multe generatii specia este eliminata, media fitness-ului din specie.
+\\
+Aceast medie va fi folosit in urmatoare functie, \texttt{AdjustAllSpeciesPotentialMemeberCount()}, unde se calculeaza, ca un raport intre fitness-ul mediu al speciei si suma fitness-urilor medii ale tuturor speciilor ce procent din populatie vor fi potentiali membri ai speciei, asa se calculeaza numarul de membri potentiali. 
+Tot in cadrul acestei functii eliminam si membrii speciei curente care au performante mai proaste.
+\\
+Numarul de membri potentiali pentru fiecare specie este folosit in metoda \texttt{AdjustAllSpeciesPotentialMemeberCount()}, pentru a determina de cate ori vom alege parinti in mod random dintr-o specie, pentru a crea un nou copil prin crossover si mutatie.
+De remarcat ca operatorii genetici pot aduce schimbari asupra genomului copilului astfel incat acesta nu se mai incadreaza in nici una din speciile parintilor sai(in cazul in care are loc crossover intre 2 indivizi din specii diferite), insa adoptand o sugestie din cadrul \cite{NeatFAQ} pentru a mari viteza cu care are loc specierea, copilul va primi ca hint id-ul speciei primului parinte, iar la operatia de repartitie pe specii se va incerca in primul rand repartitia sa catre specia primului parinte.
+\\
+Metoda \texttt{SpeciesRepartition()} se ocupa de repartizarea genom-urilor noi create la speciile existente, si de crearea de specii noi in cadrul in care un genom nu se incadreaza in nici o specie.
