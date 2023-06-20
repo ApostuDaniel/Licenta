@@ -57,7 +57,7 @@ Solutia noastra, expusa in \ref*{lst:aliniere}, propune folosirea a 2 indexi pen
 Daca ajungem la sfarsit si genomul unui parinte sa terminat inaintea celuilat, inseamna ca restul genelor din parintele care nu sa epuizat sunt exces.
 Aceasi aliniere o facem si in cadrul operatiei de calcul al distante $\delta$ dintre 2 genom-uri, doar ca in loc sa asignam gena unui sau a altui parinte la copilul ce se formeaza, contorizam genele "matching", cele disjoint si cele "excess".
 
-\section{Retelele neuronale din NEAT}
+\section{Retelele neuronale din NEAT}\label{NeatNetworkCreation}
 Retelel neuronale din NEAT reprezinta retele neuronale recurente. Acestea au cicluri care pot porni din straturile adanci ale retelei spre cele din fata, cum ar fi de la cele de intrare la cele de iesire, si nu este garantat ca fiecare nod dintr-un strat va fi conectat la fiecare nod din urmatorul, deci reprezentarea si evaluarea din cadrul retelelor dense feed-forward nu poate fi aplicata aici.
 Lucrarea \cite{NEAT} nu are specificatii pentru generarea retelelor, inafara de faptul ca genele de conexiune setate ca disabled nu ar trebui sa fie exprimate in fenotip, adica in retea.
 \begin{lstlisting}[caption={Structura pe clase a unei retele NEAT}, label={lst:neatNetworkStructure}]
@@ -248,20 +248,80 @@ private void AdjustCompatibiltyTreshold()
 {
     if (currentGeneration > 1)
     {
-        if (species.Count < speciesTargetCount && compatibilityTreshold > minCompatibilityTreshold) compatibilityTreshold -= compatibilityModif;
-        else if (species.Count > speciesTargetCount && compatibilityTreshold < maxCompatibilityTreshold) compatibilityTreshold += compatibilityModif;
+        if (species.Count < speciesTargetCount && compatibilityTreshold > minCompatibilityTreshold) 
+            compatibilityTreshold -= compatibilityModif;
+        else if (species.Count > speciesTargetCount && compatibilityTreshold < maxCompatibilityTreshold) 
+            compatibilityTreshold += compatibilityModif;
 
         if (compatibilityTreshold < minCompatibilityTreshold) compatibilityTreshold = minCompatibilityTreshold;
         if (compatibilityTreshold > maxCompatibilityTreshold) compatibilityTreshold = maxCompatibilityTreshold;
     }
 }
 \end{lstlisting}
-In \texttt{ComputeAllSpeciesAdjustedFitness()} se intimpla urmatoarele operatii: pentru fiecare specie, sunt sortati membrii fiecare speciei dupa fitness-ul retelei lor, se determina daca exista o imbunatatire a celei mai bun fitness al speciei de pana acum, si in caz contrar daca nu a existat o imbunatatire timp de prea multe generatii specia este eliminata, media fitness-ului din specie.
+
+Fiecare membru din populatie apartine unei specii.Apartenent la o anumita specie e determinata de genomul membrului. O specie in cadrul implementarii noastre are urmatorea structura:
+\begin{lstlisting}[caption={Reprezentarea unei specii in algoritm}, label={lst:SpeciesClass}]
+public class Species
+{
+    public int Id { get; set; }
+    public List<int> MembersIdx { get; set; }
+    public NeatGenome SpeciesRepresentative { get; set; }
+    public int PotentialMembersCount { get; set; }
+    public float LastBestFitness { get; set; }
+    public int GenerationsSinceImprovement { get; set; }
+    public int GenerationsSinceMemebersAssigned { get; set; }
+    public float SpeciesAdjustedFitness { get; set; }
+    public (byte r, byte g, byte b) RgbColor { get; set; }
+    ...
+}
+\end{lstlisting}
+Vom descrie aceste proprietati in cadrul metodeleor care le acceseaza.
+
+In \texttt{ComputeAllSpeciesAdjustedFitness()} se intimpla urmatoarele operatii: pentru fiecare specie, membrii din \texttt{MembersIdx} sunt sortati dupa fitness-ul retelelor lor, se determina daca exista o imbunatatire a celei mai bun fitness al speciei de pana acum accesand \texttt{LastBestFitness}, iar in caz contrar se incrementeaza counter-ul \texttt{GenerationsSinceImprovement}, ceea ce duce la eliminarea speciei daca aceasta a stagnat de prea multe generatii.
+Dupa care se calculeaza media fitness-ului membrilor speciei, ce este asignata proprietatii \texttt{SpeciesAdjustedFitness}.
 \\
-Aceast medie va fi folosit in urmatoare functie, \texttt{AdjustAllSpeciesPotentialMemeberCount()}, unde se calculeaza, ca un raport intre fitness-ul mediu al speciei si suma fitness-urilor medii ale tuturor speciilor ce procent din populatie vor fi potentiali membri ai speciei, asa se calculeaza numarul de membri potentiali. 
-Tot in cadrul acestei functii eliminam si membrii speciei curente care au performante mai proaste.
+Aceast medie va fi folosit in urmatoarea functie, \texttt{AdjustAllSpeciesPotentialMemeberCount()}, unde se calculeaza, ca un raport intre fitness-ul mediu al speciei si suma fitness-urilor medii ale tuturor speciilor ce procent din populatie vor fi potentiali membri ai speciei, asa se calculeaza numarul de membri potentiali, \texttt{PotentialMembersCount}. 
+Tot in cadrul acestei functii eliminam si membrii speciei curente care au performante mai proaste. De exemplu daca pastram doar 30\% dintre mebri sunt eliminati ceilalti 70\%
 \\
-Numarul de membri potentiali pentru fiecare specie este folosit in metoda \texttt{AdjustAllSpeciesPotentialMemeberCount()}, pentru a determina de cate ori vom alege parinti in mod random dintr-o specie, pentru a crea un nou copil prin crossover si mutatie.
-De remarcat ca operatorii genetici pot aduce schimbari asupra genomului copilului astfel incat acesta nu se mai incadreaza in nici una din speciile parintilor sai(in cazul in care are loc crossover intre 2 indivizi din specii diferite), insa adoptand o sugestie din cadrul \cite{NeatFAQ} pentru a mari viteza cu care are loc specierea, copilul va primi ca hint id-ul speciei primului parinte, iar la operatia de repartitie pe specii se va incerca in primul rand repartitia sa catre specia primului parinte.
+Numarul de membri potentiali pentru fiecare specie este folosit in metoda \texttt{AdjustAllSpeciesPotentialMemeberCount()}, pentru a determina de cate ori vom utiliza o specie pentru alegerea in mod aleator a parintilor unui nou copil, a carui genom e generat prin crossover si mutatie in cadrul metodei \texttt{GenerateNextGenGenomes}.
+Tot in aceasta metoda pentru fiecare specie existenta va fi ales in mod aleator dintre membrii sai un reprezentant, inainte initierii procesului de creare de noi copii care vor inlocui populatia curenta.
+De remarcat ca operatorii genetici pot aduce schimbari asupra genomului copilului astfel incat acesta nu se mai incadreaza in nici una din speciile parintilor sai(in cazul in care are loc crossover intre 2 indivizi din specii diferite), insa adoptand o sugestie din cadrul \cite{NeatFAQ} pentru a mari viteza cu care are loc specierea, copilul va primi ca \texttt{speciesHint} proprietatea \texttt{Id} a speciei primului parinte.
 \\
-Metoda \texttt{SpeciesRepartition()} se ocupa de repartizarea genom-urilor noi create la speciile existente, si de crearea de specii noi in cadrul in care un genom nu se incadreaza in nici o specie.
+Metoda \texttt{SpeciesRepartition()} se ocupa de repartizarea genom-urilor noi create la pasul anterior la cate o specie.
+Pentru fiecare genom care reprezinta noua populatie, determinam prin intermediul proprietatii sale \texttt{speciesHint}, daca acesta apartine la aceasi specie ca parintele său, calculand distanta de compatibilitate $\delta$ dintre \texttt{SpeciesRepresentative} si genom-ul curent.
+Daca $\delta$ nu este mai mic decat pragul de compatibilitate, adica genomul copilului nu apartine speciei parintelui, refacem acelasi calcul cu fiecare dintre celelalte specii.
+Daca genomul curent nu este compatibil cu niciuna dintre speciile din populatie, este creata o noua specie, care primeste un nou \texttt{Id} unic, o culoare pe care o generam pe baza id-ului(aceasta va fi culoarea obiectelor din scena care reprezinta membri ai speciei), reprezentantul speciei va fi genomul curent, si tot el va fi si unicul membru, daca nu sunt asignati si alte genom-uri acestei specii.
+\\
+In cadrul acestei metode vom executa si operatia de eliminare a speciilor redundante. Acestea sunt specii care nu au avut asignat nici un membru timp de mai multe generatii, valoare care o putem accesa prin prorietatea \texttt{GenerationsSinceMemebersAssigned} a speciei.
+Nu eliminam specia inca de la prima generatie in care nu i-a fost asociat nici un membru, deoarece e posibil ca in timpul unei generatii ulterioare aceasteia sa ii fie asociat unul, deci evitam crearea de specii noi fara motiv. 
+\\
+Toate genom-urile populatiei noi au fost asociate speciilor cu care sunt compatibile, asa ca tot ce a mai ramas e ca pentru fiecare individ din populatie sa ii generam din genom reteau neuronala dupa cum am descris in sectiunea \ref{NeatNetworkCreation}, prin metoda \texttt{GenerateNetworks()}, si sa generam creaturile din scena care vor folosi aceste retele prin metoda \texttt{GenerateCreatures()} pe care o expunem in listing-ul \ref{lst:GenerateCreatures} ca un exemplu pentru cum arata generarea unei populatii de prada, cu tot cu parametri.
+\begin{lstlisting}[caption={Generarea speciilor de prada}, label={lst:GenerateCreatures}]
+var foodMask = LayerMask.GetMask("Food");
+foreach (var s in species)
+{
+    foreach (int member in s.MembersIdx)
+    {
+        var pos = new Vector2(UnityEngine.Random.value, UnityEngine.Random.value);
+        pos = Camera.main.ViewportToWorldPoint(pos);
+
+        allCreatures[member] = Instantiate(creaturePrefab, pos, transform.rotation);
+        var creatureController = allCreatures[member].gameObject.GetComponent<PreyController>();
+        currentPopulation++;
+
+        creatureController.network = allNetworks[member];
+        creatureController.inputNodes = inputNodes;
+        creatureController.outputNodes = outputNodes;
+        creatureController.totalEnergy = startingEnergy;
+        creatureController.energyForFood = energyForFood;
+
+        creatureController.fowTargetsMask = foodMask;
+        creatureController.wallRayDistance = 20f;
+        creatureController.viewDistance = 20f;
+        creatureController.viewAngle = 90f;
+        creatureController.angleSplits = 3;
+        (var r, var g, var b) = s.RgbColor;
+        creatureController.spriteColor = new Color32(r, g, b, 255);
+    }
+}
+\end{lstlisting}
