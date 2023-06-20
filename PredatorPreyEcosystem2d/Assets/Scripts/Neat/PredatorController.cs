@@ -35,7 +35,7 @@ public class PredatorController : CreatureController
         Die(DeathCause.Predation);
     }
 
-    protected override void Die(DeathCause deathCause)
+    public override void Die(DeathCause deathCause)
     {
         network.fitness = totalEnergy;
         Destroy(gameObject);

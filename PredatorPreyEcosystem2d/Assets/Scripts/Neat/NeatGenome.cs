@@ -265,78 +265,78 @@ namespace Assets.Scripts.Neat
             connectionGenes.Add(conn2);
         }
 
-        private bool InnovateConnectionFeedForward(InovationManger inovManager, float reassignmentRange)
-        {
-            List<int> hiddenNodes = Enumerable.Range(InNodes + OutNodes, nodeGenes.Count - (InNodes + OutNodes)).ToList();
-            Utils.Shuffle(hiddenNodes);
+        //private bool InnovateConnectionFeedForward(InovationManger inovManager, float reassignmentRange)
+        //{
+        //    List<int> hiddenNodes = Enumerable.Range(InNodes + OutNodes, nodeGenes.Count - (InNodes + OutNodes)).ToList();
+        //    Utils.Shuffle(hiddenNodes);
 
-            foreach (var hiddenNodeIdx in hiddenNodes)
-            {
-                NodeGene node1 = nodeGenes[hiddenNodeIdx];
+        //    foreach (var hiddenNodeIdx in hiddenNodes)
+        //    {
+        //        NodeGene node1 = nodeGenes[hiddenNodeIdx];
 
-                List<int> allNodes = Enumerable.Range(0, nodeGenes.Count).ToList();
-                //Avoid Self Connections
-                allNodes.Remove(hiddenNodeIdx);
-                Utils.Shuffle(allNodes);
+        //        List<int> allNodes = Enumerable.Range(0, nodeGenes.Count).ToList();
+        //        //Avoid Self Connections
+        //        allNodes.Remove(hiddenNodeIdx);
+        //        Utils.Shuffle(allNodes);
 
-                foreach (var nodeIdx in allNodes)
-                {
-                    NodeGene node2 = nodeGenes[nodeIdx];
+        //        foreach (var nodeIdx in allNodes)
+        //        {
+        //            NodeGene node2 = nodeGenes[nodeIdx];
 
-                    if (HasConnection(node1, node2)) continue;
+        //            if (HasConnection(node1, node2)) continue;
 
-                    switch (node2.type)
-                    {
-                        case TYPE.Input:
-                            var newConnToHidden = new ConnectionGene(node2, node1, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
-                            {
-                                inovationNr = inovManager.GetInv(node2.id, node1.id)
-                            };
-                            connectionGenes.Add(newConnToHidden);
-                            return true;
+        //            switch (node2.type)
+        //            {
+        //                case TYPE.Input:
+        //                    var newConnToHidden = new ConnectionGene(node2, node1, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
+        //                    {
+        //                        inovationNr = inovManager.GetInv(node2.id, node1.id)
+        //                    };
+        //                    connectionGenes.Add(newConnToHidden);
+        //                    return true;
 
-                        case TYPE.Output:
-                            var newConnToOutput = new ConnectionGene(node1, node2, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
-                            {
-                                inovationNr = inovManager.GetInv(node1.id, node2.id)
-                            };
-                            connectionGenes.Add(newConnToOutput);
-                            return true;
+        //                case TYPE.Output:
+        //                    var newConnToOutput = new ConnectionGene(node1, node2, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
+        //                    {
+        //                        inovationNr = inovManager.GetInv(node1.id, node2.id)
+        //                    };
+        //                    connectionGenes.Add(newConnToOutput);
+        //                    return true;
 
-                        case TYPE.Hidden:
-                            ConnectionGene newConnHiddenToHidden;
-                            if (IsAncestorOf(node1, node2))
-                            {
-                                newConnHiddenToHidden = new ConnectionGene(node2, node1, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
-                                {
-                                    inovationNr = inovManager.GetInv(node2.id, node1.id)
-                                };
-                            }
-                            else
-                            {
-                                newConnHiddenToHidden = new ConnectionGene(node1, node2, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
-                                {
-                                    inovationNr = inovManager.GetInv(node1.id, node2.id)
-                                };
-                            }
-                            connectionGenes.Add(newConnHiddenToHidden);
-                            return true;
+        //                case TYPE.Hidden:
+        //                    ConnectionGene newConnHiddenToHidden;
+        //                    if (IsAncestorOf(node1, node2))
+        //                    {
+        //                        newConnHiddenToHidden = new ConnectionGene(node2, node1, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
+        //                        {
+        //                            inovationNr = inovManager.GetInv(node2.id, node1.id)
+        //                        };
+        //                    }
+        //                    else
+        //                    {
+        //                        newConnHiddenToHidden = new ConnectionGene(node1, node2, Random.Range(-reassignmentRange, reassignmentRange), true, 0)
+        //                        {
+        //                            inovationNr = inovManager.GetInv(node1.id, node2.id)
+        //                        };
+        //                    }
+        //                    connectionGenes.Add(newConnHiddenToHidden);
+        //                    return true;
 
-                        default:
-                            throw new System.Exception("Encountered NodeGene that is neither type Input, Output or Hidden");
-                    }
-                }
-            }
+        //                default:
+        //                    throw new System.Exception("Encountered NodeGene that is neither type Input, Output or Hidden");
+        //            }
+        //        }
+        //    }
 
-            return false;
-        }
+        //    return false;
+        //}
 
-        private bool IsAncestorOf(NodeGene origin, NodeGene possibleAncestor)
-        {
-            var originInputs = connectionGenes.FindAll(gene => gene.outNode == origin);
-            return originInputs.Any(originInput => originInput.inNode == possibleAncestor)
-                || originInputs.Any(originInput => originInput.inNode.type == TYPE.Hidden && IsAncestorOf(originInput.inNode, possibleAncestor));
-        }
+        //private bool IsAncestorOf(NodeGene origin, NodeGene possibleAncestor)
+        //{
+        //    var originInputs = connectionGenes.FindAll(gene => gene.outNode == origin);
+        //    return originInputs.Any(originInput => originInput.inNode == possibleAncestor)
+        //        || originInputs.Any(originInput => originInput.inNode.type == TYPE.Hidden && IsAncestorOf(originInput.inNode, possibleAncestor));
+        //}
 
         private bool HasConnection(NodeGene node1, NodeGene node2)
         {

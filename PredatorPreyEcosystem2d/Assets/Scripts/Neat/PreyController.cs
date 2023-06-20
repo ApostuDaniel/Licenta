@@ -35,7 +35,7 @@ public class PreyController : CreatureController
         Die(DeathCause.Predation);
     }
 
-    protected override void Die(DeathCause deathCause)
+    public override void Die(DeathCause deathCause)
     {
         network.fitness = totalEnergy;
         Destroy(gameObject);
@@ -44,31 +44,13 @@ public class PreyController : CreatureController
 
     protected override int SetSensors()
     {
-        //for (int i = 0; i < rayDirections.Length; i++)
-        //{
-        //    hit = Physics2D.Raycast(transform.position, rayDirections[i], rayDistance);
-        //    if (hit.collider != null && hit.transform.CompareTag("Wall"))
-        //    {
-        //        sensors[currSensor] = hit.distance / rayDistance;
-        //        Debug.DrawLine(transform.position, hit.point, Color.yellow);
-        //    }
-        //    else { sensors[currSensor] = 1.0f; }
-        //    currSensor++;
-        //}
-
-        //for (int i = 0; i < rayDirections.Length; i++)
-        //{
-        //    hit = Physics2D.Raycast(transform.position, rayDirections[i], rayDistance);
-        //    if (hit.collider != null && hit.transform.CompareTag("Food"))
-        //    {
-        //        sensors[currSensor] = hit.distance / rayDistance;
-        //        Debug.DrawLine(transform.position, hit.point, Color.yellow);
-        //    }
-        //    else { sensors[currSensor] = 1.0f;}
-        //    currSensor++;
-        //}
-
         int currSensor = base.SetSensors();
+
+        //var rayDirections = new Vector2[] { transform.up + transform.right, transform.up, transform.up - transform.right };
+        //foreach (var rayDirection in rayDirections)
+        //{
+        //    sensors[currSensor++] = CastRay(rayDirection, wallRayDistance, "Food", Color.yellow);
+        //}
 
         foreach (var foodDensity in FindVisibleTargets(fowTargetsMask))
         {

@@ -20,7 +20,7 @@ if __name__ == '__main__':
     headers = ['generation', 'average_fitness', 'best_fitness', 'best_hidden_nodes', 'best_nr_connections']
     # headers = ['generation', 'average_fitness', 'best_fitness']
 
-    fileName = r"E:\Faculatate\Anul3\Licenta\PredatorPreyEcosystem2d\Logs\Fitness\fitness_log_638227166565336427.csv"
+    fileName = r"E:\Faculatate\Anul3\Licenta\PredatorPreyEcosystem2d\Logs\Fitness\fitness_log_638229056774058503.csv"
     df = pd.read_csv(fileName, sep=",", decimal=".", index_col=0)
     # df['generation'] = df['generation'].astype(int)
     # df['average_fitness'] = df['average_fitness'].astype(float)

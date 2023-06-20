@@ -46,6 +46,43 @@ namespace Assets.Scripts.Neat
             EstablishEvalOrder(verificationDictionary);
         }
 
+        private Dictionary<Connection, (CycleDetection verification, bool mark)> DetectCycles(List<Connection> connections)
+        {
+            Dictionary<Connection, (CycleDetection verification, bool mark)> verificationDictionary = new();
+            connections.ForEach(conn => verificationDictionary.Add(conn, (CycleDetection.Unverified, false)));
+            //foreach (Connection conn in connections)
+            //{
+            //    verificationDictionary.Add(conn, (CycleDetection.Unverified, false));
+            //}
+
+            foreach (var nodeId in inputs)
+            {
+                var currRoute = new List<int>() { nodeId };
+                ExploreRouteCiclicity(currRoute, verificationDictionary);
+            }
+
+            return verificationDictionary;
+        }
+
+        private void ExploreRouteCiclicity(List<int> route, Dictionary<Connection, (CycleDetection verification, bool mark)> verificationDictionary)
+        {
+            foreach (var conn in nodes[route[^1]].outputConnections)
+            {
+                if (verificationDictionary[conn].verification == CycleDetection.Unverified)
+                {
+                    if (route.Contains(conn.outNode))
+                    {
+                        verificationDictionary[conn] = (CycleDetection.Cycle, false);
+                    }
+                    else
+                    {
+                        verificationDictionary[conn] = (CycleDetection.Verified, false);
+                        ExploreRouteCiclicity(new List<int>(route) { conn.outNode }, verificationDictionary);
+                    }
+                }
+            }
+        }
+
         private void RemoveExtraStructures(Dictionary<Connection, (CycleDetection verification, bool mark)> verificationDictionary)
         {
             var extraConnections = verificationDictionary.Where(pair => pair.Value.verification == CycleDetection.Unverified).Select(pair => pair.Key).ToList();
@@ -109,41 +146,6 @@ namespace Assets.Scripts.Neat
             evalOrder.AddRange(currOrder);
         }
 
-        private Dictionary<Connection, (CycleDetection verification, bool mark)> DetectCycles(List<Connection> connections)
-        {
-            Dictionary<Connection, (CycleDetection verification, bool mark)> verificationDictionary = new();
-            foreach (Connection conn in connections)
-            {
-                verificationDictionary.Add(conn, (CycleDetection.Unverified, false));
-            }
-
-            foreach(var nodeId in inputs)
-            {
-                var currRoute = new List<int>() { nodeId };
-                ExploreRouteCiclicity(currRoute, verificationDictionary);
-            }
-
-            return verificationDictionary;
-        }
-
-        private void ExploreRouteCiclicity(List<int> route, Dictionary<Connection, (CycleDetection verification, bool mark)> verificationDictionary)
-        {
-            foreach(var conn in nodes[route[^1]].outputConnections)
-            {
-                if(verificationDictionary[conn].verification == CycleDetection.Unverified)
-                {
-                    if (route.Contains(conn.outNode))
-                    {
-                        verificationDictionary[conn] = (CycleDetection.Cycle, false);
-                    }
-                    else
-                    {
-                        verificationDictionary[conn] = (CycleDetection.Verified, false);
-                        ExploreRouteCiclicity(new List<int>(route) { conn.outNode }, verificationDictionary);
-                    }
-                }
-            }
-        }
 
         private List<Connection> GetEnabledConnectionsAndNodes(NeatGenome neatGenome)
         {

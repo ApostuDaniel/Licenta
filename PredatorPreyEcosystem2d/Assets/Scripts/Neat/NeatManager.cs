@@ -43,20 +43,21 @@ namespace Assets.Scripts.Neat
         public float excessCoef = 1.0f;
         public float disjointCoef = 1.0f;
         public float weightDiffCoef = 0.4f;
-        public int topMemberSelectionCutoff = 5;
+        public int topMembersSelectionCutoff = 5;
 
         [Header("Energy Parameters")]
         public float startingEnergy = 15f;
-
         public float energyForFood = 4f;
-
-        [SerializeField] private int currentGeneration = 1;
 
         private InovationManger inovationManger;
 
+        [Header("Population parameters")]
         public int startingPopulation;
-
         public int currentPopulation;
+        public float timePerGeneration;
+        [SerializeField] private float timeElapsed;
+        [SerializeField] private int currentGeneration = 1;
+        [SerializeField] private int numberOfSpecies = 1;
 
         [Header("Logging")]
         private string logFileName;
@@ -93,15 +94,37 @@ namespace Assets.Scripts.Neat
 
         private void FixedUpdate()
         {
-            if (currentPopulation <= 0)
+            timeElapsed += Time.deltaTime;
+            if (currentPopulation <= 0 || timeElapsed > timePerGeneration)
             {
+                if(timeElapsed > timePerGeneration)
+                {
+                    int nrOfSurvivors = CleanUpAliveCreatures();
+                    Debug.Log($"In generatia {currentGeneration} au supravetuit pana la final {nrOfSurvivors} creaturi");
+                }
+
                 RespawnFood();
                 if(isLoggindEnabled) {
                     LogFitnessInfo();
                 }
                 
                 ProduceNextGeneration();
+                timeElapsed = 0;
+                numberOfSpecies = species.Count;
             }
+        }
+
+        private int CleanUpAliveCreatures()
+        {
+            int survivors = 0;
+            foreach(var creature in allCreatures)
+            {
+                if(creature == null) continue;
+                creature.GetComponent<PreyController>().Die(CreatureController.DeathCause.TimeEnd);
+                survivors++;
+            }
+
+            return survivors;
         }
 
         private void RespawnFood()
@@ -205,8 +228,8 @@ namespace Assets.Scripts.Neat
                 //Choose a a random representative organism for the species
                 (s.SpeciesRepresentative, _) = ChooseRandOrganism(s);
 
-                //If a species has more organisms than topMemberSelectionCutoff keep the top member unchnaged in the next gen
-                if (s.MembersIdx.Count > topMemberSelectionCutoff)
+                //If a species has more organisms than topMembersSelectionCutoff keep the top member unchnaged in the next gen
+                if (s.MembersIdx.Count > topMembersSelectionCutoff)
                 {
                     newGenomes.Add(allGenomes[s.MembersIdx[0]]);
                     allGenomes[s.MembersIdx[0]].speciesHint = s.Id;

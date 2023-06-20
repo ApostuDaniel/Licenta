@@ -202,7 +202,7 @@ namespace Assets.Scripts.Neat
                 //Choose a a random representative organism for the species
                 (s.SpeciesRepresentative, _) = ChooseRandOrganism(s);
 
-                //If a species has more organisms than topMemberSelectionCutoff keep the top member unchnaged in the next gen
+                //If a species has more organisms than topMembersSelectionCutoff keep the top member unchnaged in the next gen
                 if (s.MembersIdx.Count > topMemberSelectionCutoff)
                 {
                     newGenomes.Add(allGenomes[s.MembersIdx[0]]);

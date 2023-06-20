@@ -1,10 +1,11 @@
 using Assets.Scripts.Neat;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CreatureController : MonoBehaviour
 {
-    public enum DeathCause{ WallHit, Starvation, Predation };
+    public enum DeathCause{ WallHit, Starvation, Predation, TimeEnd};
 
     [Header("Movement settings")]
     public float accelerationFactor;
@@ -26,16 +27,12 @@ public class CreatureController : MonoBehaviour
 
     [Header("Field of view")]
     public float viewDistance;
-
-    public float wallRayDistance;
-
     [Range(0, 180)]
     public float viewAngle;
-
     public int angleSplits;
-
     public LayerMask fowTargetsMask;
 
+    public float wallRayDistance;
     //[HideInInspector]
     //public List<List<Transform>> fowTargets = new();
 
@@ -61,7 +58,7 @@ public class CreatureController : MonoBehaviour
     protected void FixedUpdate()
     {
         SetSensors();
-        float[] outputs = network.FeedForward(sensors);
+        float[] outputs = network != null? network.FeedForward(sensors): new float[] { 0f, 0f } ;
         pastVelocity = outputs[0];
         MoveCreature(outputs[0], outputs[1]);
         UpdateCreatureState();
@@ -93,11 +90,11 @@ public class CreatureController : MonoBehaviour
             {
                 if (angleToTarget <= limitLeft - (j * angleIncrement) && angleToTarget >= limitLeft - ((j + 1) * angleIncrement))
                 {
-                    //fowTargets[j].Add(target); break;
-
+                    //fowTargets[j].Add(target);
                     float distanceToTarget = Vector2.Distance(transform.position, target.position);
                     //we want to normalize the distance to the target in [0,1], and the closer to the target, the higher the value
                     splitValues[j] += 1f - (distanceToTarget / viewDistance);
+                    break;
                 }
             }
         }
@@ -138,7 +135,7 @@ public class CreatureController : MonoBehaviour
         }
     }
 
-    protected virtual void Die(DeathCause deathCause)
+    public virtual void Die(DeathCause deathCause)
     {
         network.fitness = totalEnergy;
         Destroy(gameObject);
