@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using UnityEditor;
 using UnityEngine;
 
@@ -13,11 +14,13 @@ namespace Assets.Scripts.Neat
     public class NeatManager : MonoBehaviour
     {
         public GameObject creaturePrefab;
-
+        public GameObject managerOversier;
         private GameObject[] allCreatures;
         private NeatNetwork[] allNetworks;
         private NeatGenome[] allGenomes;
         private List<Species> species;
+
+        //private int synchronizationId;
 
         [Header("NEAT parameters")]
         public int inputNodes, outputNodes;
@@ -52,6 +55,7 @@ namespace Assets.Scripts.Neat
         private InovationManger inovationManger;
 
         [Header("Population parameters")]
+        public bool isPreyPopulation;
         public int startingPopulation;
         public int currentPopulation;
         public float timePerGeneration;
@@ -63,7 +67,7 @@ namespace Assets.Scripts.Neat
         private string logFileName;
         public bool isLoggindEnabled = true;
 
-        private static int speciesId;
+        private int speciesId;
 
 
         private void Start()
@@ -72,6 +76,7 @@ namespace Assets.Scripts.Neat
             allNetworks = new NeatNetwork[startingPopulation];
             allGenomes = new NeatGenome[startingPopulation];
             species = new List<Species>();
+            //synchronizationId = ManagerSynchronizer.AddManagerToSynchronizer();
 
             //For each genome, at initialization we make a connection between each input and each output,
             //as such there are inputNodes * outputNodes connections at the start, starting from 0, so the next innovation number will be the connection count
@@ -79,7 +84,8 @@ namespace Assets.Scripts.Neat
 
             if(isLoggindEnabled)
             {
-                logFileName = $"Logs\\Fitness\\fitness_log_{DateTime.Now.Ticks}.csv";
+                string popType = isPreyPopulation ? "prey" : "predator";
+                logFileName = $"Logs\\Fitness\\fitness_log_{popType}_{DateTime.Now.Ticks}.csv";
                 using (var fs = File.Create(logFileName)) { }
                 using var writer = new StreamWriter(logFileName);
                 using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
@@ -94,13 +100,21 @@ namespace Assets.Scripts.Neat
 
         private void FixedUpdate()
         {
+            var managerController = managerOversier.GetComponent<ManagerOversier>();
             timeElapsed += Time.deltaTime;
             if (currentPopulation <= 0 || timeElapsed > timePerGeneration)
             {
-                if(timeElapsed > timePerGeneration)
+                managerController.StopManager(this.gameObject);
+                if (!managerController.AllManagersStoped())
+                {
+                    return;
+                }
+
+                if (timeElapsed > timePerGeneration)
                 {
                     int nrOfSurvivors = CleanUpAliveCreatures();
-                    Debug.Log($"In generatia {currentGeneration} au supravetuit pana la final {nrOfSurvivors} creaturi");
+                    string popType = isPreyPopulation ? "prey" : "predators";
+                    Debug.Log($"In generatia {currentGeneration} au supravetuit pana la final {nrOfSurvivors} {popType}");
                 }
 
                 RespawnFood();
@@ -112,6 +126,10 @@ namespace Assets.Scripts.Neat
                 timeElapsed = 0;
                 numberOfSpecies = species.Count;
             }
+            else
+            {
+                managerController.StartManager(this.gameObject);
+            }
         }
 
         private int CleanUpAliveCreatures()
@@ -120,7 +138,14 @@ namespace Assets.Scripts.Neat
             foreach(var creature in allCreatures)
             {
                 if(creature == null) continue;
-                creature.GetComponent<PreyController>().Die(CreatureController.DeathCause.TimeEnd);
+                if (isPreyPopulation)
+                {
+                    creature.GetComponent<PreyController>().Die(CreatureController.DeathCause.TimeEnd);
+                }
+                else
+                {
+                    creature.GetComponent<PredatorController>().Die(CreatureController.DeathCause.TimeEnd);
+                }
                 survivors++;
             }
 
@@ -135,7 +160,7 @@ namespace Assets.Scripts.Neat
 
         private void ProduceNextGeneration()
         {
-            //inovationManger.ResetForNextGeneration();
+            inovationManger.ResetForNextGeneration();
             AdjustCompatibiltyTreshold();
             ComputeAllSpeciesAdjustedFitness();
             AdjustAllSpeciesPotentialMemeberCount();
@@ -213,6 +238,12 @@ namespace Assets.Scripts.Neat
         private void CreateNewSpecies(int genomeIdx)
         {
             var s = new Species(speciesId++);
+            if (!isPreyPopulation)
+            {
+                //so we can differentiate predator populations also by color, not just by shape
+                (var r, var g, var b) = species[0].RgbColor;
+                species[0].RgbColor = (b, r, g);
+            }
             s.MembersIdx.Add(genomeIdx);
             s.SpeciesRepresentative = allGenomes[genomeIdx];
             species.Add(s);
@@ -383,76 +414,11 @@ namespace Assets.Scripts.Neat
             csv.NextRecord();
         }
 
-        //private void MutateGeneration()
-        //{
-        //    foreach (var genome in allGenomes)
-        //    {
-        //        genome.Mutate(inovationManger, mutationProb, weightPerturbanceProb, newNodeProb, newConnectionProb, perturbanceRange, reassignmentRange);
-        //    }
-        //}
-
-        //private void SelectGeneration()
-        //{
-        //    var maxEval = allNetworks[networkRankings[0]].fitness;
-
-        //    //var fitneses = allNetworks.Select(n => (maxEval / (maxEval - n.fitness + 0.01f)) + 0.01f).ToArray();
-        //    //var fitneses = allNetworks.Select(n => Mathf.Pow((n.fitness / maxEval) + float.Epsilon + 1, 1f)).ToArray();
-
-        //    //Rank roullete
-        //    var fitneses = new float[startingPopulation];
-        //    for(int i = 0; i < startingPopulation; i++)
-        //    {
-        //        fitneses[networkRankings[i]] = startingPopulation - i;
-        //    }
-
-        //    float fSum = fitneses.Sum();
-
-        //    var normalizedFitneses = fitneses.Select(f => f / fSum).ToArray();
-
-        //    float[] selectionProb = new float[normalizedFitneses.Length];
-        //    selectionProb[0] = 0;
-
-        //    for (int i = 1; i < normalizedFitneses.Length; i++)
-        //    {
-        //        selectionProb[i] = selectionProb[i - 1] + normalizedFitneses[i];
-        //    }
-
-        //    selectionProb[^1] = 1;
-
-        //    NeatGenome[] nextGenomes = new NeatGenome[startingPopulation];
-        //    int nrElites = (int)(startingPopulation * elitismFactor);
-        //    NeatGenome[] elites = networkRankings.Take(nrElites).Select(i => allGenomes[i]).ToArray();
-
-        //    for (int i = 0; i < nrElites; i++) nextGenomes[i] = elites[i];
-
-        //    for (int i = nrElites; i < startingPopulation; i++)
-        //    {
-        //        double r = UnityEngine.Random.value;
-        //        bool chosen = false;
-
-        //        for (int j = 0; j < selectionProb.Length; j++)
-        //        {
-        //            if (r <= selectionProb[j])
-        //            {
-        //                nextGenomes[i] = allGenomes[j];
-        //                chosen = true;
-        //                break;
-        //            }
-        //        }
-        //        if (!chosen) nextGenomes[i] = (allGenomes[^1]);
-        //    }
-
-        //    allGenomes = nextGenomes;
-        //}
-
-        //private void RankNetworks()
-        //{
-        //    networkRankings = allNetworks.OrderByDescending(x => x.fitness).Select(x => x.index).ToArray();
-        //}
-
         private void GenerateCreatures()
         {
             var foodMask = LayerMask.GetMask("Food");
+            var preyMask = LayerMask.GetMask("Prey");
+            var predatorMask = LayerMask.GetMask("Predator");
             foreach (var s in species)
             {
                 foreach (int member in s.MembersIdx)
@@ -461,22 +427,45 @@ namespace Assets.Scripts.Neat
                     pos = Camera.main.ViewportToWorldPoint(pos);
 
                     allCreatures[member] = Instantiate(creaturePrefab, pos, transform.rotation);
-                    var creatureController = allCreatures[member].gameObject.GetComponent<PreyController>();
+                    if (isPreyPopulation)
+                    {
+                        var creatureController = allCreatures[member].gameObject.GetComponent<PreyController>();
+                        creatureController.network = allNetworks[member];
+                        creatureController.inputNodes = inputNodes;
+                        creatureController.outputNodes = outputNodes;
+                        creatureController.totalEnergy = startingEnergy;
+                        creatureController.energyForFood = energyForFood;
+                        creatureController.energyOffering = (preyController) => 0f;
+                        creatureController.manager = this;
+                        creatureController.predatorMask = predatorMask;
+
+                        creatureController.fowTargetsMask = foodMask;
+                        creatureController.wallRayDistance = 20f;
+                        creatureController.viewDistance = 20f;
+                        creatureController.viewAngle = 90f;
+                        creatureController.angleSplits = 3;
+                        (var r, var g, var b) = s.RgbColor;
+                        creatureController.spriteColor = new Color32(r, g, b, 255);
+                    }
+                    else
+                    {
+                        var creatureController = allCreatures[member].gameObject.GetComponent<PredatorController>();
+                        creatureController.network = allNetworks[member];
+                        creatureController.inputNodes = inputNodes;
+                        creatureController.outputNodes = outputNodes;
+                        creatureController.totalEnergy = startingEnergy;
+                        creatureController.energyForFood = energyForFood;
+                        creatureController.manager = this;
+
+                        creatureController.fowTargetsMask = preyMask;
+                        creatureController.wallRayDistance = 20f;
+                        creatureController.viewDistance = 20f;
+                        creatureController.viewAngle = 90f;
+                        creatureController.angleSplits = 3;
+                        (var r, var g, var b) = s.RgbColor;
+                        creatureController.spriteColor = new Color32(r, g, b, 255);
+                    }
                     currentPopulation++;
-
-                    creatureController.network = allNetworks[member];
-                    creatureController.inputNodes = inputNodes;
-                    creatureController.outputNodes = outputNodes;
-                    creatureController.totalEnergy = startingEnergy;
-                    creatureController.energyForFood = energyForFood;
-
-                    creatureController.fowTargetsMask = foodMask;
-                    creatureController.wallRayDistance = 20f;
-                    creatureController.viewDistance = 20f;
-                    creatureController.viewAngle = 90f;
-                    creatureController.angleSplits = 3;
-                    (var r, var g, var b) = s.RgbColor;
-                    creatureController.spriteColor = new Color32(r, g, b, 255);
                 }
             }
         }
@@ -496,6 +485,12 @@ namespace Assets.Scripts.Neat
         private void InitializeGenomes()
         {
             species.Add(new Species(speciesId++));
+            if (!isPreyPopulation)
+            {
+                //so we can differentiate predator populations also by color, not just by shape
+                (var r, var g, var b) = species[0].RgbColor;
+                species[0].RgbColor = (b, r, g);
+            }
             Debug.Log($"<color=#{species[0].GetStringColor()}>New Species created with id {species[0].Id}</color>");
             for (int i = 0; i < startingPopulation; i++)
             {

@@ -17,6 +17,7 @@ public class CreatureController : MonoBehaviour
 
     public int inputNodes, outputNodes;
     public Color spriteColor;
+    public NeatManager manager;
 
     [Header("Energy")]
     public float totalEnergy;
@@ -91,6 +92,7 @@ public class CreatureController : MonoBehaviour
                 if (angleToTarget <= limitLeft - (j * angleIncrement) && angleToTarget >= limitLeft - ((j + 1) * angleIncrement))
                 {
                     //fowTargets[j].Add(target);
+
                     float distanceToTarget = Vector2.Distance(transform.position, target.position);
                     //we want to normalize the distance to the target in [0,1], and the closer to the target, the higher the value
                     splitValues[j] += 1f - (distanceToTarget / viewDistance);
@@ -139,7 +141,7 @@ public class CreatureController : MonoBehaviour
     {
         network.fitness = totalEnergy;
         Destroy(gameObject);
-        GameObject.FindObjectOfType<NeatManager>().RegisterDeath(deathCause);
+        manager.RegisterDeath(deathCause);
     }
 
     protected virtual int SetSensors()

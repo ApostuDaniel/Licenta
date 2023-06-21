@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 1214081640826192977}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 2, z: 0}
-  m_LocalScale: {x: 1.5, y: 1.5, z: 1}
+  m_LocalScale: {x: 1.7, y: 1.7, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -157,15 +157,16 @@ MonoBehaviour:
   inputNodes: 0
   outputNodes: 0
   spriteColor: {r: 1, g: 0, b: 0, a: 0}
+  manager: {fileID: 0}
   totalEnergy: 0
   currentEnergy: 0
   energyForFood: 0
   speedConsumptionMultiplier: 0
   viewDistance: 0
-  wallRayDistance: 0
   viewAngle: 0
   angleSplits: 0
   fowTargetsMask:
     serializedVersion: 2
     m_Bits: 0
+  wallRayDistance: 0
   sensors: []

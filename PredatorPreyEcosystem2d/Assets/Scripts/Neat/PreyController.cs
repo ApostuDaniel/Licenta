@@ -1,9 +1,14 @@
 using Assets.Scripts.Food;
 using Assets.Scripts.Neat;
+using System;
 using UnityEngine;
 
 public class PreyController : CreatureController
 {
+    public bool useFoW = true;
+    public FoodManager foodManager;
+    public Func<PreyController, float> energyOffering;
+    public LayerMask predatorMask;
     protected override void Start()
     {
         accelerationFactor = 3f;
@@ -30,16 +35,25 @@ public class PreyController : CreatureController
         }
     }
 
-    public void GetHunted(PredatorController predator)
+    public float GetHunted(PredatorController predator)
     {
         Die(DeathCause.Predation);
+        return energyOffering(this);
     }
 
     public override void Die(DeathCause deathCause)
     {
-        network.fitness = totalEnergy;
-        Destroy(gameObject);
-        GameObject.FindObjectOfType<NeatManager>().RegisterDeath(deathCause);
+        if (foodManager != null)
+        {
+            Destroy(gameObject);
+            foodManager.MakeSingleFood(network.index);
+        }
+        else
+        {
+            network.fitness = totalEnergy;
+            Destroy(gameObject);
+            manager.RegisterDeath(deathCause);
+        }
     }
 
     protected override int SetSensors()
@@ -52,11 +66,37 @@ public class PreyController : CreatureController
         //    sensors[currSensor++] = CastRay(rayDirection, wallRayDistance, "Food", Color.yellow);
         //}
 
-        foreach (var foodDensity in FindVisibleTargets(fowTargetsMask))
+        float[] detectionSensorsValues;
+        if (useFoW)
         {
-            sensors[currSensor++] = foodDensity;
+            detectionSensorsValues = FindVisibleTargets(fowTargetsMask);
+        }
+        else
+        {
+            detectionSensorsValues = FindRaycastTargets();
+        }
+
+        foreach (var sensorValue in detectionSensorsValues)
+        {
+            sensors[currSensor++] = sensorValue;
+        }
+
+        foreach(var enemyDetectionSensorValue in FindVisibleTargets(predatorMask))
+        {
+            sensors[currSensor++] = enemyDetectionSensorValue;
         }
 
         return currSensor;
+    }
+
+    private float[] FindRaycastTargets()
+    {
+        var rayDirections = new Vector2[] { transform.up + transform.right, transform.up, transform.up - transform.right };
+        float[] values = new float[rayDirections.Length];
+        for(int i = 0; i < rayDirections.Length; i++) {
+            values[i] = CastRay(rayDirections[i], wallRayDistance, "Food", Color.yellow);
+        }
+
+        return values;
     }
 }
