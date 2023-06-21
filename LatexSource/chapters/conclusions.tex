@@ -1,2 +1,15 @@
 \chapter*{Concluzii} 
 \addcontentsline{toc}{chapter}{Concluzii}
+În cadrul acestei teze, am studiat aplicarea algoritmului NEAT in cadrul unui mediu virtual pentru evoluția in mod natural a unor creaturi simulate.\\
+În capitolul \ref{NEAT} si capitolul \ref{rtNEAT} am prezentat aspectele teoretice a 2 algoritmi de NeuroEvolutie potriviți pentru scopul nostru, ambii din lucrările lui Kenneth O. Stanley(\cite{NEAT} si \cite{rtNEAT}).\\
+La \ref{MediulVirtual} am descris mediul virtual in care va urma rularea simulărilor, si componentele acestuia: "FoodManger", "NeatManager", "Food", "Prey" si "Predator".\\
+In \ref{DetaliiImplementare} am detaliat scripturile asociate obiectelor din mediul virtual, precum si detalii proprii de implementare ale NEAT, cu unele îmbunătățiri sugerate in \cite{NeatFAQ}.\\
+Prin experimentele din secțiunea \ref{ResultsFowVsFork} am demonstrat ca creaturile de tip "Prey" pot înțelege limitele mediului in care se afla, si pot învața foarte bine comportamente de "grazing", adică de colectare a fragmentelor de energie,
+iar prin experimentul din secțiunea \ref{ResultsChassing} am arătat ca prădătorii de asemenea pot înțelege limitele mediului, si pot dezvolta comportamente de urmărire a pradei.\\
+Totuși, cu toate ca am reușit sa simulam aceste comportamente esențiale in mod independent, nu am putut crea un mediu echilibrat pentru susținerea coevoluției, după cum am văzut in secțiunea \ref{ResultsCoevolution}.\\
+Am observat in timpul simulării indivizi din populația de prada care au învățat sa nu se apropie de prădători, si am văzut si strategii de vânătoare din partea prădătorilor, cum ar fi rotirea in cercuri mai mari pentru a putea lovi prada din punctul ei mort, de la spate.
+Însa aceste comportamente nu a reușit sa supraviețuiască de-a lungul generațiilor.\\
+Ca arii de dezvoltare pe viitor, ar trebui sa încercam mai multe combinații de parametri in cadrul sistemului controlat de NEAT pentru a putea simula coevoluția. rtNEAT poate fi o varianta încă mai buna a algoritmului pentru acest scop.
+Odată ce putem simula coevoluția, ar fi interesant sa schimbam unele din caracteristicile fizice ale indivizilor din populație pentru a vedea ce comportamente noi se pot dezvolta. 
+Un exemplu ar fi ca prăzile sa aibă o pereche de "coarne", adică o structura care sa împiedice atacurile din fata. Aceasta idee poate sta si la baza unui eventual joc, unde un jucător poate încerca augmentarea indivizilor sai cu diferite structuri, si sa intre in competiție cu indivizii pregătiți de alt jucător.
+Doresc sa mulțumesc profesorului coordonator pentru sfaturile si înțelegerea oferita in cadrul procesului de elaborare a tezei de licența, si profesorilor pe care i-am întâlnit in cadrul facultății in ultimii 3 ani: Mulțumesc pentru tot.

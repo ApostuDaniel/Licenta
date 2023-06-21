@@ -8,13 +8,6 @@ Am considerat acest algoritm potrivit deoarece în mediul nostru virtual, ne dor
 \\
 În cadrul rtNEAT, la fiecare $n$ intervale de timp, se executa o serie de operațiuni pentru înlocui un organism cu performante scăzute cu copilul dintre 2 organisme mai performante, alese în mod probabilist astfel încât sa prezerveze speciația din NEAT.
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.25\textwidth]{images/logoFii.png}
-    \caption{Ciclul de înlocuiri în cadrul rtNEAT}
-    \label{fig:crossover}
-\end{figure}
-
 \section{Înlocuirea agentului cel mai puțin adaptat}
 Prin aceasta operație, se înlocuiește un agent puțin performant cu unul potențial mai performant, dar în asa fel încât se păstreze dinamica de speciație din NEAT.
 Pentru asta, alegem sa eliminam agentul cu cel mai mic "fitness ajustat", deoarece dacă alegerea sar face după cel mai rău fitness "neajustat", ar fi eliminate întâi organismele din specii în care a apărut o inovație topologica noua și care nu a avut timp sa se optimizez, astfel speciația nu ar mai proteja inovația.

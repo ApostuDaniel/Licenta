@@ -17,97 +17,68 @@ sorting=ynt
 \usepackage{wrapfig}
 \usepackage{csquotes}
 \usepackage{animate}
+\usepackage{multicol}
 
 \usepackage{listings}
-\usepackage{etoolbox}
 \usepackage{color}
+\lstloadlanguages{C,C++,csh,Java}
 
-\definecolor{base0}{RGB}{131,148,150}
-\definecolor{base01}{RGB}{88,110,117}
-\definecolor{base2}{RGB}{238,232,213}
-\definecolor{sgreen}{RGB}{133,153,0}
-\definecolor{sblue}{RGB}{38,138,210}
-\definecolor{scyan}{RGB}{42,161,151}
-\definecolor{smagenta}{RGB}{211,54,130}
+\definecolor{red}{rgb}{0.6,0,0} 
+\definecolor{blue}{rgb}{0,0,0.6}
+\definecolor{green}{rgb}{0,0.8,0}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+\definecolor{cloudwhite}{rgb}{0.9412, 0.9608, 0.8471}
 
-
-\newcommand\digitstyle{\color{smagenta}}
-\newcommand\symbolstyle{\color{base01}}
-\makeatletter
-\newcommand{\ProcessDigit}[1]
-{%
-  \ifnum\lst@mode=\lst@Pmode\relax%
-   {\digitstyle #1}%
-  \else
-    #1%
-  \fi
-}
-\makeatother
-
-
-\lstdefinestyle{solarizedcsharp} {
-  language=[Sharp]C,
-  frame=lr,
-  linewidth=160mm,
-  breaklines=true,
-  tabsize=2,
-  numbers=left,
-  numbersep=5pt,
-  firstnumber=auto,
-  numberstyle=\tiny\ttfamily\color{base0},
-  rulecolor=\color{base2},
-  basicstyle=\footnotesize\ttfamily,
-  commentstyle=\color{base01},
-  morecomment=[s][\color{base01}]{/*+}{*/},
-  morecomment=[s][\color{base01}]{/*-}{*/},
-  morekeywords={  abstract, event, new, struct,
-                as, explicit, null, switch,
-                base, extern, object, this,
-                bool, false, operator, throw,
-                break, finally, out, true,
-                byte, fixed, override, try,
-                case, float, params, typeof,
-                catch, for, private, uint,
-                char, foreach, protected, ulong,
-                checked, goto, public, unchecked,
-                class, if, readonly, unsafe,
-                const, implicit, ref, ushort,
-                continue, in, return, using,
-                decimal, int, sbyte, virtual,
-                default, interface, sealed, volatile,
-                delegate, internal, short, void,
-                do, is, sizeof, while,
-                double, lock, stackalloc,
-                else, long, static,
-                enum, namespace, string, var},
-  keywordstyle=\bfseries\color{sgreen},
-  showstringspaces=false,
-  stringstyle=\color{scyan},
-  identifierstyle=\color{sblue},
-  extendedchars=true,
-  literate=
-    {0}{{{\ProcessDigit{0}}}}1
-    {1}{{{\ProcessDigit{1}}}}1
-    {2}{{{\ProcessDigit{2}}}}1
-    {3}{{{\ProcessDigit{3}}}}1
-    {4}{{{\ProcessDigit{4}}}}1
-    {5}{{{\ProcessDigit{5}}}}1
-    {6}{{{\ProcessDigit{6}}}}1
-    {7}{{{\ProcessDigit{7}}}}1
-    {8}{{{\ProcessDigit{8}}}}1
-    {9}{{{\ProcessDigit{9}}}}1
-    {\}}{{\symbolstyle{\}}}}1
-    {\{}{{\symbolstyle{\{}}}1
-    {(}{{\symbolstyle{(}}}1
-    {)}{{\symbolstyle{)}}}1
-    {=}{{\symbolstyle{$=$}}}1
-    {;}{{\symbolstyle{$;$}}}1
-    {>}{{\symbolstyle{$>$}}}1
-    {<}{{\symbolstyle{$<$}}}1
-    {\%}{{\symbolstyle{$\%$}}}1,
+\lstset{
+language=csh,
+basicstyle=\footnotesize\ttfamily,
+numbers=left,
+numberstyle=\tiny,
+numbersep=5pt,
+tabsize=2,
+extendedchars=true,
+breaklines=true,
+frame=b,
+stringstyle=\color{blue}\ttfamily,
+showspaces=false,
+showtabs=false,
+xleftmargin=17pt,
+framexleftmargin=17pt,
+framexrightmargin=5pt,
+framexbottommargin=4pt,
+commentstyle=\color{green},
+morecomment=[l]{//}, %use comment-line-style!
+morecomment=[s]{/*}{*/}, %for multiline comments
+showstringspaces=false,
+morekeywords={ abstract, event, new, struct,
+as, explicit, null, switch,
+base, extern, object, this,
+bool, false, operator, throw,
+break, finally, out, true,
+byte, fixed, override, try,
+case, float, params, typeof,
+catch, for, private, uint,
+char, foreach, protected, ulong,
+checked, goto, public, unchecked,
+class, if, readonly, unsafe,
+const, implicit, ref, ushort,
+continue, in, return, using,
+decimal, int, sbyte, virtual,
+default, interface, sealed, volatile,
+delegate, internal, short, void,
+do, is, sizeof, while,
+double, lock, stackalloc,
+else, long, static,
+enum, namespace, string},
+keywordstyle=\color{cyan},
+identifierstyle=\color{red},
+backgroundcolor=\color{cloudwhite},
 }
 
-\lstset{escapechar=@,style=solarizedcsharp}
+\usepackage{caption}
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox{blue}{\parbox{\textwidth}{\hspace{15pt}#1#2#3}}}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white, singlelinecheck=false, margin=0pt, font={bf,footnotesize}}
 
 % includes options
 \geometry{  a4paper,            % scientific thesis standard

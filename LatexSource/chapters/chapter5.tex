@@ -1,64 +1,255 @@
 \chapter{Parametrii experimentali}\label{SetariExperimentale}
-In acest capitol vom descrie in primul rand parametrii tuturor obiectelor din cadrul scenei care pot influenta simularea.
-Ulterior vom descrie setul de simulari, scopul fiecareia, si setul de parametri care le definesc.
-\section{Main Camera si Walls}
+În acest capitol vom descrie în primul rând parametrii tuturor obiectelor din cadrul scenei care pot influența simularea.
+Ulterior vom descrie setul de simulări, scopul fiecăreia și setul de parametri care le definesc.
+\section{Parametrii}
+\subsection{Main Camera și Walls}
 \begin{itemize}
-    \item \texttt{Size} : schimba marimea GameView-ului prezentat de camera, si deci schimba si marimea zonei in care se genereaza fragmente de energie si creaturi.
-    \item \texttt{Wall transform}: peretii doar trebuie scalati si repozitionati astfel incat sa inchida complet spatiul din interior, dar sa fie putin inafara view-ului camerei principale.
+\item \texttt{Size}: schimbă mărimea GameView-ului prezentat de cameră, și deci schimbă și mărimea zonei în care se generează fragmente de energie și creaturi.
+\item \texttt{Wall transform}: pereții trebuie să fie scalați și repoziționați astfel încât să închidă complet spațiul din interior, dar să fie puțin în afara view-ului camerei principale.
 \end{itemize}
 
-\section{FoodManager}
+\subsection{FoodManager}
 \begin{itemize}
-    \item \texttt{Food Prefab}: prefab-ul obiectului ce va fi folosit pe post de mancare
-    \item \texttt{Total Food}: numar intreg ce reprezinta cate obiect Food Prefab vor fi generate si pozitionate in scena. Acest numar ramane constant pe parcursul unei simulari.
+\item \texttt{Food Prefab}: prefab-ul obiectului ce va fi folosit pe post de mâncare
+\item \texttt{Total Food}: număr întreg ce reprezintă câte obiecte Food Prefab vor fi generate și poziționate în scenă. Acest număr rămâne constant pe parcursul unei simulari.
 \end{itemize}
 
-\section{Prey si Predator}
+\subsection{Prey și Predator}
 \begin{itemize}
-    \item \texttt{Acceleration Factor}: un factor ce scaleaza viteza unei creaturi, care in mod implicit e intre -1 si 1.
-    \item \texttt{Turn Factor}: cu cate grade se poate roti o creatura intr-o directie.
-    \item \texttt{Smoothing Factor}: factor ce afecteaza fluiditatea miscarilor, atat a rotatiilor cat si a deplasarilor inainte si inapoi.
-    \item \texttt{Network}: reteau atribuita creaturii.
-    \item \texttt{InputNodes}: numarul de noduri din stratul de intrarea al retelei.
-    \item \texttt{OutputNodes}: numarul de noduri din stratul de iesire al retelei.
-    \item \texttt{Total Energy}: cantitate de energie atribuita creaturii initial.
-    \item \texttt{Energy For Food}: cata energie este obtinuta la coliziunea cu o sursa de mancare.
-    \item \texttt{Speed Consumption Multiplier}: un factor ce scaleaza consumul de energie al creaturii in dependenta de viteza cu care aceasta se misca.
-    \item \texttt{View Distance}: parametru al senzorului "FoW", stabileste raza din jurul creaturii in care se pot detecta tintele.
-    \item \texttt{View Angle}: parametru al "FoW", stabileste unghiul din fata creaturii in care sunt detecatate tintele.
-    \item \texttt{Angle Splits}: parametru al "FoW", stabileste in cate zone egale de detectie este impartit \textbf{View Angle}.
-    \item \texttt{Fow Targets Mask}: parametru al "FoW", stabileste pe ce Layer va avea loc detectia, adica care sunt tintele senzorului.
-    \item \texttt{Wall Ray Distance}: parametru al senzorului de detectie a peretelui, stabileste distanta pe care este proiectat Raycast-ul.
-    \item \texttt{Sprite Color}: culoarea sprite-ului atasat creaturii.
+\item \texttt{Acceleration Factor}: un factor ce scalează viteza unei creaturi, care în mod implicit este între -1 și 1.
+\item \texttt{Turn Factor}: cu câte grade se poate roti o creatură într-o direcție.
+\item \texttt{Smoothing Factor}: factor ce afectează fluiditatea mișcărilor, atât a rotațiilor cât și a deplasărilor înainte și înapoi.
+\item \texttt{Network}: rețeaua atribuită creaturii.
+\item \texttt{InputNodes}: numărul de noduri din stratul de intrare al rețelei.
+\item \texttt{OutputNodes}: numărul de noduri din stratul de ieșire al rețelei.
+\item \texttt{Total Energy}: cantitatea de energie atribuită creaturii inițial.
+\item \texttt{Energy For Food}: câtă energie este obținută la coliziunea cu o sursă de hrană.
+\item \texttt{Speed Consumption Multiplier}: un factor ce scalează consumul de energie al creaturii în dependență de viteza cu care aceasta se mișcă.
+\item \texttt{View Distance}: parametru al senzorului "FoW", stabilește raza în jurul creaturii în care se pot detecta țintele.
+\item \texttt{View Angle}: parametru al "FoW", stabilește unghiul din fața creaturii în care sunt detectate țintele.
+\item \texttt{Angle Splits}: parametru al "FoW", stabilește în câte zone egale de detecție este împărtit \textbf{View Angle}.
+\item \texttt{FoW Targets Mask}: parametru al "FoW", stabilește pe ce Layer va avea loc detecția, adică care sunt țintele senzorului.
+\item \texttt{Wall Ray Distance}: parametru al senzorului de detectare a peretelui, stabilește distanța pe care este proiectat Raycast-ul.
+\item \texttt{Sprite Color}: culoarea sprite-ului atașat creaturii.
 \end{itemize}
 
-\section{NeatManager}
+\subsection{NeatManager}
 \begin{itemize}
-    \item \texttt{Creature Prefab}: Prefab-ul din care se vor construi membrii popoulatiei
-    \item \texttt{Input Nodes}: numarul de noduri pentru stratul de intrare al retelelor
-    \item \texttt{Output Nodes}: numarul de noduri pentru stratul de intrare al retelelor
-    \item \texttt{Init Weight Range}: valoare $x$ care defineste intervalul [$-x$, $x$], intre care vor fi initializate ponderile retelelor.
-    \item \texttt{Mutation Prob}: probabilitatea ca un genom sa sufere mutatii la aplicare operatorului de mutatie.
-    \item \texttt{Weight Perturbance Prob}: probabilitate $p$ a fiecarei gene de conexiune din genom de a suferi o perturbare. Probabilitate ca unei ponderi sa ii fie reatribuite o valoare aleatorie e $1-p$.
-    \item \texttt{Perturbance Range}: valoare $x$ care defineste intervalul [$-x$, $x$], intre care se alege o valoare aleatorie pentru perturbarea unei ponderi.
-    \item \texttt{Reassignment Range}: valoare $x$ care defineste intervalul [$-x$, $x$], intre care se alege o valoare aleatorie folosita pentru resetarea ponderii.
-    \item \texttt{New Node Prob}: probabilitatea ca unui genom sa ii fie aplicat mutatia structurala de adaugare a unui nou nod.
-    \item \texttt{New Connection Prob}: probabilitatea ca unui genom sa ii fie aplicat mutatia structurala de adaugare a unei noi conexiuni.
-    \item \texttt{Inherid Disabled Gene Prob}: probabilitatea in cadrul crossover, daca una dintre doua gene aliniate "matching" este dezactivat, copilul va mosteni o gena dezactivata.
-    \item \texttt{Chance Mutation No Crossover}: probabilitate ca un nou membru din populatie sa nu fie generat prin crossover, ci doar prin operatorul de mutatie aplicat nodului parinte
-    \item \texttt{Inter Species Mating Rate}: probabilitate in timpul ca operatii de crossover ca al doilea parinte sa fie ales dintr-o specie aleatorie
-    \item \texttt{Species Dropoff Age}: numarul de generatii pe care o specie il poate supravetui daca aceasta nu prezinta imbunatatiri ale fitness-ului celui mai bun membru.
-    \item \texttt{Survival Treshold}: procentul din membrii cei mai buni ai unei specii care sunt pastrati pentru crearea genom-urilor populatiei din generatia viitoare.
-    \item \texttt{Species Target Count}: Numarul tinta de specii in cadrul populatiei.
-    \item \texttt{Compatibility Treshold}: pragul de compatibilitate $\delta_t$. Daca distanta de compatibilitate dintre doua genom-uri este mai mare decat aceasta valoare, atunci genom-urile fac parte din specii diferite.
-    \item \texttt{Min Compatibility Treshold}: valoarea minima pentru pragul de compatibilitate
-    \item \texttt{Max Compatibility Treshold}: valoarea maxima a pragului de compatibilitate
-    \item \texttt{Compatibility Modif}: valoare cu care este modificat pragul de compatibilitate, daca suntem sub numarul tinta de specii, $\delta_t$ va scadea cu atat la fiecare generatie, iar daca suntem peste numarul tinta, $\delta_t$ va creste cu atat.
-    \item \texttt{Excess Coef}: valoarea $c1$ din formula \ref{eq:compatibility}
-    \item \texttt{Disjoint Coef}: valoarea $c2$ din formula \ref{eq:compatibility}
-    \item \texttt{Weight Diff Coef}: valoarea $c3$ din formula \ref{eq:compatibility}
-    \item \texttt{Top Members Selection Cutoff}: daca o specie are mai mult de atatia membri, atunci genomul celui mai bun membru al speciei va trece in urmatoarea generatie fara ai fi aplicati operatorii de crossover sau de mutatie.
-    \item \texttt{Starting Energy}: cantitatea de energie cu care incepe fiecare membru din populatie.
-    \item \texttt{Energy For Food}: cata energie este obtinuta la coliziunea creaturii cu o sursa de mancare.
-    \item \texttt{Starting Population}: cate creaturi sunt in populatia initiala a fiecarei generatii.
+\item \texttt{Creature Prefab}: Prefab-ul din care se vor construi membrii populației.
+\item \texttt{Input Nodes}: numărul de noduri pentru stratul de intrare al rețelelor.
+\item \texttt{Output Nodes}: numărul de noduri pentru stratul de ieșire al rețelelor.
+\item \texttt{Init Weight Range}: valoarea $x$ care definește intervalul [$-x$, $x$], între care vor fi inițializate ponderile rețelelor.
+\item \texttt{Mutation Prob}: probabilitatea ca un genom să sufere mutații la aplicarea operatorului de mutație.
+\item \texttt{Weight Perturbance Prob}: probabilitatea $p$ a fiecărei gene de conexiune din genom de a suferi o perturbare. Probabilitatea ca unei ponderi să îi fie reatribuită o valoare aleatoare este $1-p$.
+\item \texttt{Perturbance Range}: valoarea $x$ care definește intervalul [$-x$, $x$], între care se alege o valoare aleatoare pentru perturbarea unei ponderi.
+\item \texttt{Reassignment Range}: valoarea $x$ care definește intervalul [$-x$, $x$], între care se alege o valoare aleatoare folosită pentru resetarea ponderii.
+\item \texttt{New Node Prob}: probabilitatea ca unui genom să îi fie aplicată mutația structurală de adăugare a unui nou nod.
+\item \texttt{New Connection Prob}: probabilitatea ca unui genom să îi fie aplicată mutația structurală de adăugare a unei noi conexiuni.
+\item \texttt{Inherit Disabled Gene Prob}: probabilitatea în cadrul crossover, dacă una dintre două gene aliniate "matching" este dezactivată, copilul va moșteni o genă dezactivată.
+\item \texttt{Chance Mutation No Crossover}: probabilitate ca un nou membru din populație să nu fie generat prin crossover, ci doar prin operatorul de mutație aplicat nodului părinte.
+\item \texttt{Inter Species Mating Rate}: probabilitate în timpul operațiilor de crossover ca al doilea părinte să fie ales dintr-o specie aleatoare.
+\item \texttt{Species Dropoff Age}: numărul de generații pe care o specie le poate supraviețui dacă aceasta nu prezintă îmbunătățiri ale fitness-ului celui mai bun membru.
+\item \texttt{Survival Threshold}: procentul din cei mai buni membri ai unei specii care sunt păstrați pentru crearea genomurilor populației din generația viitoare.
+\item \texttt{Species Target Count}: Numărul țintă de specii în cadrul populației.
+\item \texttt{Compatibility Threshold}: pragul de compatibilitate $\delta_t$. Dacă distanța de compatibilitate dintre două genomuri este mai mare decât această valoare, atunci genomurile fac parte din specii diferite.
+\item \texttt{Min Compatibility Threshold}: valoarea minimă pentru pragul de compatibilitate.
+\item \texttt{Max Compatibility Threshold}: valoarea maximă a pragului de compatibilitate.
+\item \texttt{Compatibility Modifier}: valoarea cu care este modificat pragul de compatibilitate. Dacă suntem sub numărul țintă de specii, $\delta_t$ va scădea cu atât la fiecare generație, iar dacă suntem peste numărul țintă, $\delta_t$ va crește cu atât.
+\item \texttt{Excess Coefficient}: valoarea $c_1$ din formula de calcul a compatibilității.
+\item \texttt{Disjoint Coefficient}: valoarea $c_2$ din formula de calcul a compatibilității.
+\item \texttt{Weight Difference Coefficient}: valoarea $c_3$ din formula de calcul a compatibilității.
+\item \texttt{Top Members Selection Cutoff}: dacă o specie are mai mulți membri decât această valoare, atunci genomul celui mai bun membru al speciei va trece în generația următoare fără a i se aplica operatorii de crossover sau de mutație.
+\item \texttt{Starting Energy}: cantitatea de energie cu care începe fiecare membru din populație.
+\item \texttt{Energy For Food}: câtă energie este obținută la coliziunea creaturii cu o sursă de hrană.
+\item \texttt{Starting Population}: câte creaturi sunt în populația inițială a fiecărei generații.
+\item \texttt{Time Per Generation}: numărul maxim de secunde cat pot supraviețui membrii unei generații.
 \end{itemize}
+
+\section{Experimentele}
+\subsection{Experiment: comparație între senzorul "Fork" și senzorul "FoW"}\label{ParametersFowVsFork}
+Acest experiment implică doar speciile de pradă și fragmentele de energie, iar fitness-ul este măsurat ca cantitatea de energie acumulată de fiecare membru al populației.
+Simularea este rulată timp de 40 de generații de două ori: odată, toți membrii populației utilizează senzori de tip "FoW", iar a doua oară sunt utilizați senzorii "Fork".\\
+Registrul de inovații nu este resetat la fiecare generație, ci este păstrat pe parcursul întregii simulări în ambele cazuri.\\
+Fiecare fragment de energie consumat este regenerat la un set de coordonate aleatorii din GameView.\\
+Parametrii simulării sunt următorii:\\
+Pentru Camera:
+\begin{multicols}{2}
+    \begin{enumerate}
+        \item Size: 60
+        \item Aspect Ratio: 16:9
+    \end{enumerate}
+\end{multicols}
+
+Pentru \textbf{Prada}:
+\begin{multicols}{2}
+    \begin{enumerate}
+        \item Acceleration Factor: 3
+        \item Turn Factor: 90
+        \item Smoothing Factor: 0.1
+        \item Network: atribuita de NeatManager
+        \item InputNodes: 7
+        \item OutputNodes: 2
+        \item Total Energy: 15
+        \item Energy For Food: 4
+        \item Speed Consumption Multiplier: 1.5
+        \item View Distance: 20
+        \item View Angle: 90
+        \item Angle Splits: 3
+        \item FoW Targets Mask: Layer Food
+        \item Wall Ray Distance: 20
+    \end{enumerate}
+\end{multicols}
+
+Pentru \textbf{NeatManager}:
+\begin{multicols}{2}
+    \begin{enumerate}
+        \item Creature Prefab: Prey
+        \item Input Nodes: 7
+        \item Output Nodes: 2
+        \item Init Weight Range: 1
+        \item Mutation Prob: 0.8
+        \item Weight Perturbance Prob: 0.9
+        \item Perturbance Range: 0.1
+        \item Reassignment Range: 1
+        \item New Node Prob: 0.03
+        \item New Connection Prob: 0.05
+        \item Inherit Disabled Gene Prob: 0.75
+        \item Chance Mutation No Crossover: 0.25
+        \item Inter Species Mating Rate: 0.001
+        \item Species Dropoff Age: 150
+        \item Survival Threshold: 0.3
+        \item Species Target Count: 4
+        \item Compatibility Threshold: 3
+        \item Min Compatibility Threshold: 1
+        \item Max Compatibility Threshold: 7
+        \item Compatibility Modifier: 0.2
+        \item Excess Coefficient: 1
+        \item Disjoint Coefficient: 1
+        \item Weight Difference Coefficient: 0.4
+        \item Top Members Selection Cutoff: 5
+        \item Starting Energy: 15
+        \item Energy For Food: 4
+        \item Starting Population: 40
+        \item Time Per Generation: 600
+    \end{enumerate}
+\end{multicols}
+Pentru \textbf{FoodManager}:
+\begin{multicols}{2}
+    \begin{enumerate}
+        \item Food Prefab: Food
+        \item Total Food: 80
+    \end{enumerate}
+\end{multicols}
+Rezultatele pot fi consultate in secțiunea \ref{ResultsFowVsFork}. Datorita lor, pentru restul experimentelor toate creaturile vor avea senzori "FoW".
+
+\subsection{Experiment: comparație între păstrarea numerelor de inovație permanent sau resetarea lor la fiecare generație}\label{ParametersPermanentVsReset}
+Acest experiment implică doar speciile de pradă și fragmentele de energie, iar fitness-ul este măsurat ca cantitatea de energie acumulată de fiecare membru al populației.
+Parametrii simulării sunt aceiași ca cei ai experimentului din secțiunea \ref{ParametersFowVsFork}.
+Datorită faptului că folosim aceiași parametrii ca în experimentul precedent, deja avem rezultatele pentru scenariul folosirii senzorului "FoW" și păstrarea permanentă a numerelor de inovație.
+Aici explorăm doar scenariul în care se folosește același senzor, dar cu resetarea registrului de numere de inovație la fiecare generație.\\
+Simularea este rulată timp de 40 de generații.\\
+Rezultatele sunt prezentate în secțiunea \ref{ResultsPermanentVsReset}.
+
+\subsection{Experiment: dezvoltarea comportamentelor de urmărire în prădători}\label{ParametersChasing}
+În cadrul acestui experiment folosim o populație atât de pradă cât și de prădători, dar fără aspectul de coevoluție.
+Scopul este de a vedea dacă prădătorii noștri pot dezvolta comportamente de urmărire.
+NEATManager se va ocupa de evoluția speciilor de prădători, iar prada pe care prădătorii o vor vâna va fi generată de FoodManager.
+Se aplică aceleași principii ca la generarea fragmentelor de energie: dacă un obiect pradă este distrus, acesta va fi regenerat în altă parte în cadrul GameView.
+Spre deosebire de fragmentele de energie, organisme de pradă au atribuite câte o rețea neuronală complet conectată, cu ponderi aleatorii care le dictează mișcările, și senzori "Fork", deoarece sunt mai puțin costisitori din punct de vedere computational și prada oricum nu va învăța să-i folosească.
+Simularea este rulată timp de 40 de generații. Vom menționa parametrii doar acolo unde aceștia diferă de experimentele anterioare.
+Parametrii simulării sunt următorii:\\
+Pentru \textbf{Prada}:
+\begin{multicols}{2}
+    \begin{enumerate}
+        \item Network: retea cu ponderi aleatorii
+        \item InputNodes: 7
+        \item OutputNodes: 2
+        \item Total Energy: 10000
+        \item Energy For Food: 0
+        \item Speed Consumption Multiplier: -1.5
+        \item Senzor FoW: dezactivat
+        \item Wall Ray Distance: 20
+        \item Sprite Color: Color32(0, 255, 0, 255).
+    \end{enumerate}
+\end{multicols}
+Pentru \textbf{Pradator}:
+\begin{multicols}{2}
+    \begin{enumerate}
+        \item Acceleration Factor: 5
+        \item Turn Factor: 90
+        \item Smoothing Factor: 0.1
+        \item Network: atribuita de NeatManager
+        \item InputNodes: 7
+        \item OutputNodes: 2
+        \item Total Energy: 25
+        \item Energy For Food: 10
+        \item Speed Consumption Multiplier: 1.2
+        \item View Distance: 20
+        \item View Angle: 90
+        \item Angle Splits: 3
+        \item FoW Targets Mask: Layer Prey
+        \item Wall Ray Distance: 20
+    \end{enumerate}
+\end{multicols}
+Pentru \textbf{NeatManager}:
+\begin{multicols}{2}
+    \begin{enumerate}
+        \item Creature Prefab: Predator
+        \item Starting Energy: 25
+        \item Energy For Food: 10
+    \end{enumerate}
+\end{multicols}
+Pentru \textbf{FoodManager}:
+\begin{multicols}{2}
+    \begin{enumerate}
+        \item Food Prefab: Prey
+        \item Total Food: 40
+    \end{enumerate}
+\end{multicols}
+Rezultate in sectiunea \ref{ResultsChassing}.
+
+
+\subsection{Experiment: coevoluția prăzii și a prădătorilor}\label{ParametersCoevolution}
+În acest experiment final vom încerca să simulăm evoluția atât a unei populații de pradă cât și a uneia de prădători în același timp.\\
+Prăzile vor primi un senzor suplimentar "FoW" pe lângă cel pentru detectarea fragmentelor de energie, acesta fiind folosit pentru detectarea prădătorilor.\\
+În experiment sunt folosite două obiecte NEATManager, unul pentru pradă și unul pentru prădători.
+Parametrii sunt următorii:
+Pentru \textbf{Pradă}: aceiași parametri ca în experimentul din secțiunea \ref{ParametersFowVsFork}, plus un senzor "FoW" adițional care folosește Layer Predator, și 10 noduri pentru stratul de intrare.\\
+Pentru \textbf{Prădători}, se schimbă:
+\begin{multicols}{2}
+    \begin{enumerate}
+        \item Network: atribuita de NeatManagerPredator
+        \item Total Energy: 20
+        \item Energy For Food: 15
+    \end{enumerate}
+\end{multicols}
+Pentru \textbf{NeatManagerPrey}:
+\begin{multicols}{2}
+    \begin{enumerate}
+        \item Creature Prefab: Prey
+        \item Input Nodes: 10
+        \item Output Nodes: 2
+        \item Species Target Count: 6
+        \item Starting Population: 60
+    \end{enumerate}
+\end{multicols}
+Pentru \textbf{NeatManagerPredaor}:
+\begin{multicols}{2}
+    \begin{enumerate}
+        \item Creature Prefab: Predator
+        \item Input Nodes: 7
+        \item Output Nodes: 2
+        \item Species Target Count: 3
+        \item Starting Energy: 20
+        \item Energy For Food: 15
+        \item Starting Population: 15
+    \end{enumerate}
+\end{multicols}
+Pentru \textbf{FoodManager}:
+\begin{multicols}{2}
+    \begin{enumerate}
+        \item Food Prefab: Food
+        \item Total Food: 80
+    \end{enumerate}
+\end{multicols}
+Rezultate in secțiunea \ref{ResultsCoevolution}.

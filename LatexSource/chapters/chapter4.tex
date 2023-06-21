@@ -7,7 +7,7 @@ Structura genomului în NEAT este foarte simpla, și intuitiv de implementat, la
 În cadrul operației de crossover, de asemenea, prin intermediul fitnessului este ușor sa înțelegem genele cărui părinte vor fi moștenite de copil.
 Totuși, pentru operația de aliniere a genom-urilor părinților, exemplul din "Figure 4" din \cite{NEAT} nu este destul de bun, deoarece el ascunde complexitatea operației în cazul în care genele matching nu sunt toate la început-ul fiecăruia dintre părinți, ci se pot găsi și printre genele "disjoint".
 
-\begin{lstlisting}[caption={Parcurgerea genom-urilor celor 2 parinti pentru alinierea lor in cadrul crossover. Prin "this" sunt accesate campurile primului parinte}, label={lst:aliniere}]
+\begin{lstlisting}[language={[Sharp]C}, caption={Parcurgerea genom-urilor celor 2 parinti pentru alinierea lor in cadrul crossover. Prin "this" sunt accesate campurile primului parinte}, label={lst:aliniere}]
     int idx1 = 0, idx2 = 0;
     while (idx1 < this.connectionGenes.Count && idx2 < parent2.connectionGenes.Count)
     {
@@ -57,7 +57,7 @@ Soluția noastră, expusa în \ref*{lst:aliniere}, propune folosirea a 2 indexur
 Dacă ajungem la sfârșit și genomul unui părinte sa terminat înaintea celuilalt, înseamna ca restul genelor din părintele care nu sa epuizat sunt în exces.
 Aceeași aliniere o facem și în cadrul operației de calcul al distante $\delta$ dintre 2 genom-uri, doar ca în loc sa asignam gena unui sau a altui părinte la copilul ce se formează, contorizam genele "matching", cele disjoint și cele "excess".
 
-\section{Rețelele neuronale din NEAT}
+\section{Rețelele neuronale din NEAT}\label{NeatNetworkCreation}
 Rețelele neuronale din NEAT reprezinta rețele neuronale recurente. Acestea au cicluri care pot porni din straturile adânci ale rețelei spre cele din fata, cum ar fi de la cele de intrare la cele de ieșire, și nu este garantat ca fiecare nod dintr-un strat va fi conectat la fiecare nod din următorul, deci reprezentarea și evaluarea din cadrul rețelelor dense feed-forward nu poate fi aplicata aici.
 Lucrarea \cite{NEAT} nu are specificații pentru generarea rețelelor, în afara de faptul ca genele de conexiune setate ca disabled nu ar trebui sa fie exprimate în fenotip, adică în rețea.
 \begin{lstlisting}[caption={Structura pe clase a unei retele NEAT}, label={lst:neatNetworkStructure}]
@@ -113,7 +113,7 @@ Pentru generare unei rețele RNN din genotip, vom trece prin 4 pași:
 
 Pentru prima rutina, întâi cream nodurile care corespund straturilor de intrare și celor de ieșire pe care le adaugăm în \texttt{nodes}.
 Ulterior, pentru fiecare "connection gene" care nu este dezactivata, verificam dacă nodul de intrare și cel de ieșire sunt prezente în \texttt{nodes}, altfel, le cream și le adaugăm.
-Prin informația din "connection gene", putem construi un nou obiect "Connection", iar aceasta conexiune o adaugăm în lista de \texttt{outputConnections} pentru nodul de intrare, și cea de \texttt{inputConnections} pentru nodul de ieșire.
+Prin informația din "connection gene", putem construi un nou obiect "Connection", iar aceasta conexiune o adaugăm în lista de \texttt{output\-Connections} pentru nodul de intrare, și cea de \texttt{input\-Connections} pentru nodul de ieșire.
 Astfel, fiecare nod știe cu ce alte noduri este conectat, ponderea conexiunilor și direcția conexiunilor. Păstram și o lista a tuturor conexiunilor create care va fi folosita la pasul următor.
 \\
 În pasul 2, pentru determinarea nodurilor ce formează cicluri, folosim algoritmul \ref{lst:DetectCycles}.
@@ -163,14 +163,14 @@ Astfel, structurile neconectate pot fi șterse fără sa afecteze în nici un mo
 \end{figure}
 Procesul de eliminare al structurilor redundante este simplu: fiecare conexiune rămasa în starea unverified va fi ștearsa din dicționarul de verificări, și din listele nodurilor pe care le conectează, după care este parcurs dicționarul \texttt{nodes} și sunt eliminate toate nodurile ascunse care nu au nici o conexiune de input.
 Ultima parte, stabilirea ordinii de evaluare a nodurilor este expusa în listing-ul \ref{lst:EstablishEvalOrder}.
-Logica acestei operații este următoare: un nod poate fi evaluat odată ce au fost evaluate toate nodurile cu care acesta este conectat prin lista de conexiuni \texttt{inputConnections}, cu excepția nodurilor de intrare ce sunt conectate de  nodul curent prin conexiuni ciclu, deoarece de la aceste nodul curent va lua valoarea lor de la evaluarea anterioara.
-Astfel, la început, aceasta condiție este îndeplinita doar de o parte din nodurile de intrare, care nu au \texttt{inputConnections} sau care au doar cicluri.
-Definim o lista, \texttt{currOrder} în care punem nodurile care indeplinesc aceasta condiție, iar într-o bucla, pana când toate nodurile sunt incluse în \texttt{evalOrder}:
+Logica acestei operații este următoare: un nod poate fi evaluat odată ce au fost evaluate toate nodurile cu care acesta este conectat prin lista de conexiuni \texttt{input\-Connections}, cu excepția nodurilor de intrare ce sunt conectate de  nodul curent prin conexiuni ciclu, deoarece de la aceste nodul curent va lua valoarea lor de la evaluarea anterioara.
+Astfel, la început, aceasta condiție este îndeplinita doar de o parte din nodurile de intrare, care nu au \texttt{input\-Connections} sau care au doar cicluri.
+Definim o lista, \texttt{curr\-Order} în care punem nodurile care indeplinesc aceasta condiție, iar într-o bucla, pana când toate nodurile sunt incluse în \texttt{eval\-Order}, executam următoarele operații:
 \begin{enumerate}
-    \item Cu ajutorul \texttt{verificationDictionary}, pentru fiecare nod din \texttt{currOrder}, schimbam marcajul conexiunilor sale de ieșire din $false$ în $true$.
+    \item Cu ajutorul \texttt{verification\-Dictionary}, pentru fiecare nod din \texttt{curr\-Order}, schimbam marcajul conexiunilor sale de ieșire din $false$ în $true$.
     \item Cream o lista goala next.
     \item Pentru fiecare nod care a rămas sa fie asignat ordinii: dacă toate conexiunile sale de intrare sunt cicluri sau sunt marcate true, asta însemnând ca nodul de intrare indicat de conexiune a fost deja adăugat în ordinea de evaluare. Deci, în timpul evaluării valoarea sa ar fi deja calculata, nodul curent poate fi adăugat în lista next.
-    \item Adaugăm la \texttt{evalOrder} nodurile din \texttt{currOrder}, iar noul \texttt{currOrder} va fi lista next.
+    \item Adaugăm la \texttt{eval\-Order} nodurile din \texttt{curr\-Order}, iar noul \texttt{curr\-Order} va fi lista \texttt{next}.
 \end{enumerate}
 Astfel, gradual, la fiecare iterație a buclei, nodurile care pot fi evaluate cu informația valabila la moment for fi adăugate în ordinea de evaluare, pana când acesta este completata cu toate nodurile rețelei.
 
@@ -220,7 +220,7 @@ private void EstablishEvalOrder(Dictionary<Connection, (CycleDetection verificat
 
 \section{Algoritmul NEAT}
 Responsabil de execuția algoritmului NEAT în cadrul proiectului nostru este script-ul "NeatManager.cs" atașat obiectului NeatManager din scena.
-Cea mai mare parte a algoritmului este integrata în cadrul funcției \texttt{ProduceNextGeneration()}(De văzut listing-ul \ref{lst:ProduceNextGeneration})
+Cea mai mare parte a algoritmului este integrata în cadrul funcției \texttt{Produce\-Next\-Generation()}(De văzut listing-ul \ref{lst:ProduceNextGeneration})
 
 \begin{lstlisting}[caption={Generarea urmatoarei generatii}, label={lst:ProduceNextGeneration}]
 private void ProduceNextGeneration()
@@ -237,12 +237,12 @@ private void ProduceNextGeneration()
 }
 \end{lstlisting}
 
-Se poate observa ca prima linie este comentata: de ce? În cadrul implementării noastre, \texttt{InovationManger} este o clasa  a cărei obiecte ne permit sa ținem cont de inovațiile ce apar în genom-urile populație în urma mutațiilor structurale.
+Se poate observa ca prima linie este comentata: de ce? În cadrul implementării noastre, \texttt{Inovation\-Manger} este o clasa  a cărei obiecte ne permit sa ținem cont de inovațiile ce apar în genom-urile populație în urma mutațiilor structurale.
 În pagina \cite{NeatFAQ}, este adresata întrebarea dacă ar trebuie sa păstram înregistrările noilor inovații doar pentru generația curenta sau pe tot parcursul algoritmului.
 Ca răspuns Keneth O. Stanley precizează ca efectul principal al păstrării numerelor de inovație pe tot parcursul algoritmului este ca se vor genera mai puține specii, însa acesta nu a definit o metoda ca fiind mai buna decât alta, asta depinzând de experiment.
 În cadrul simulatorului nostru totuși, păstrarea permanenta a numerelor de inovație a produs rezultate mai bune, din acest motiv linia 3 este comentata, pentru a nu reseta înregistrările la fiecare generație.
 \\
-Funcția \texttt{AdjustCompatibiltyTreshold} de asemenea este inspirata din unul din răspunsurile de pe pagina \cite{NeatFAQ}, anume dacă exista o metoda pentru selecta în mod automat pragul de compatibilitate $\delta_t$ pentru speciație.
+Funcția \texttt{Adjust\-Compatibilty\-Treshold} de asemenea este inspirata din unul din răspunsurile de pe pagina \cite{NeatFAQ}, anume dacă exista o metoda pentru selecta în mod automat pragul de compatibilitate $\delta_t$ pentru speciație.
 Aceasta metoda implica setare unui număr ținta de specii în cadrul algoritmului, iar acest pragul de compatibilitate va scădea dacă avem mai puține specii decât numărul ținta, sau va creste dacă sunt prea multe specii.
 În cadrul implementării proprii am setat un  minim și un maxim pentru acest prag cat și o valoare prin care pragul se modifica la începutul fiecărei generații(vedeți \ref{lst:AdjustCompatibiltyTreshold}).
 \begin{lstlisting}[caption={Ajustarea pragului de compatibilitate}, label={lst:AdjustCompatibiltyTreshold}]
@@ -279,26 +279,26 @@ public class Species
 \end{lstlisting}
 Vom descrie aceste proprietăți în cadrul metodelor care le accesează.
 
-În \texttt{ComputeAllSpeciesAdjustedFitness()} se întâmpla următoarele operațiuni: pentru fiecare specie, membrii din \texttt{MembersIdx} sunt sortați după fitness-ul rețelelor lor si se determina dacă exista o îmbunătățire a celui mai bun fitness al speciei de pana acum accesând \texttt{LastBestFitness}. În caz contrar, se incrementează counter-ul \texttt{GenerationsSinceImprovement}, ceea ce duce la eliminarea speciei dacă se contactează ca aceasta a stagnat de prea multe generații.
-Mai apoi, se calculează media fitness-ului membrilor speciei, ce este asignata proprietății \texttt{SpeciesAdjustedFitness}.
+În \texttt{Compute\-All\-Species\-Adjusted\-Fitness()} se întâmpla următoarele operațiuni: pentru fiecare specie, membrii din \texttt{Members\-Idx} sunt sortați după fitness-ul rețelelor lor si se determina dacă exista o îmbunătățire a celui mai bun fitness al speciei de pana acum accesând \texttt{Last\-Best\-Fitness}. În caz contrar, se incrementează counter-ul \texttt{Generations\-Since\-Improvement}, ceea ce duce la eliminarea speciei dacă se contactează ca aceasta a stagnat de prea multe generații.
+Mai apoi, se calculează media fitness-ului membrilor speciei, ce este asignata proprietății \texttt{Species\-Adjusted\-Fitness}.
 \\
-Aceasta medie va fi folosită în următoarea funcție, \texttt{AdjustAllSpeciesPotentialMemeberCount()}, unde se calculează, ca un raport intre fitness-ul mediu al speciei și suma fitness-urilor medii ale tuturor speciilor, ce procent din populație va genera potențiali membri ai speciei. În acest mod se calculează numărul de membri potențiali, \texttt{PotentialMembersCount}. 
+Aceasta medie va fi folosită în următoarea funcție, \texttt{Adjust\-All\-Species\-Potential\-Memeber\-Count()}, unde se calculează, ca un raport intre fitness-ul mediu al speciei și suma fitness-urilor medii ale tuturor speciilor, ce procent din populație va genera potențiali membri ai speciei. În acest mod se calculează numărul de membri potențiali, \texttt{Potential\-Members\-Count}. 
 Tot în cadrul acestei funcții eliminam și membrii speciei curente care au performante mai proaste. De exemplu dacă păstram doar 30\% din membri,
 ceilalți 70\% sunt eliminați. 
 \\
-Numărul de membri potențiali pentru fiecare specie este folosit în metoda \texttt{AdjustAllSpeciesPotentialMemeberCount()}, pentru a determina de cate ori vom utiliza o specie pentru alegerea în mod aleatoriu ai părinților unui nou copil, al cărui genom e generat prin crossover și mutație în cadrul metodei \texttt{GenerateNextGenGenomes}.
+Numărul de membri potențiali pentru fiecare specie este folosit în metoda \texttt{Adjust\-AllSpecies\-Potential\-Memeber\-Count()}, pentru a determina de cate ori vom utiliza o specie pentru alegerea în mod aleatoriu ai părinților unui nou copil, al cărui genom e generat prin crossover și mutație în cadrul metodei \texttt{Generate\-Next\-Gen\-Genomes}.
 Tot in aceasta metoda pentru fiecare specie existenta va fi ales in mod aleator dintre membrii sai un reprezentant, inainte initierii procesului de creare de noi copii care vor inlocui populatia curenta.
-Se poate remarca ca operatorii genetici pot aduce schimbări asupra genomului copilului astfel încât acesta nu se mai încadrează în nici una din speciile părinților sai (în cazul în care are loc crossover intre 2 indivizi din specii diferite), însa adoptând o sugestie din cadrul \cite{NeatFAQ} pentru a mari viteza cu care are loc specierea, copilul va primi ca \texttt{speciesHint} proprietatea \texttt{Id} a speciei primului părinte.
+Se poate remarca ca operatorii genetici pot aduce schimbări asupra genomului copilului astfel încât acesta nu se mai încadrează în nici una din speciile părinților sai (în cazul în care are loc crossover intre 2 indivizi din specii diferite), însa adoptând o sugestie din cadrul \cite{NeatFAQ} pentru a mari viteza cu care are loc specierea, copilul va primi ca \texttt{species\-Hint} proprietatea \texttt{Id} a speciei primului părinte.
 \\
-Metoda \texttt{SpeciesRepartition()} se ocupa de repartizarea genom-urilor noi create la pasul anterior la cate o specie.
-Pentru fiecare genom care reprezinta noua populație, determinam prin intermediul proprietății sale \texttt{speciesHint}, dacă acesta aparține același specii ca părintele său. Aceasta informație  se afla calculând distanta de compatibilitate $\delta$ dintre \texttt{SpeciesRepresentative} si genom-ul curent.
+Metoda \texttt{Species\-Repartition()} se ocupa de repartizarea genom-urilor noi create la pasul anterior la cate o specie.
+Pentru fiecare genom care reprezinta noua populație, determinam prin intermediul proprietății sale \texttt{species\-Hint}, dacă acesta aparține același specii ca părintele său. Aceasta informație  se afla calculând distanta de compatibilitate $\delta$ dintre \texttt{Species\-Representative} si genom-ul curent.
 Daca $\delta$ nu este mai mic decat pragul de compatibilitate, adica genomul copilului nu apartine speciei parintelui, refacem acelasi calcul cu fiecare dintre celelalte specii.
 Dacă genomul curent nu este compatibil cu niciuna dintre speciile din populație, o noua specie este creata, aceasta primește un nou \texttt{Id} unic, o culoare pe care o generam pe baza id-ului(aceasta va fi culoarea obiectelor din scena care reprezinta membri ai speciei), reprezentantul speciei va fi genomul curent, și tot el va fi și unicul membru, dacă nu sunt asignați și alte genom-uri acestei specii.
 \\
-În cadrul acestei metode vom executa și operația de eliminare a speciilor redundante. Acestea sunt specii care nu au avut asignat nici un membru timp de mai multe generații, valoare care o putem accesa prin prorietatea \texttt{GenerationsSinceMemebersAssigned} a speciei.
+În cadrul acestei metode vom executa și operația de eliminare a speciilor redundante. Acestea sunt specii care nu au avut asignat nici un membru timp de mai multe generații, valoare care o putem accesa prin prorietatea \texttt{Generations\-Since\-Memebers\-Assigned} a speciei.
 Nu eliminam specia încă de la prima generație în care nu i-a fost asociat nici un membru, deoarece e posibil ca în timpul unei generații ulterioare acesteia sa ii fie asociat unul, deci evitam crearea speciilor noi fără motiv. 
 \\
-Fiindcă toate genom-urile populației noi au fost asociate speciilor cu care sunt compatibile, tot ce mai rămâne de făcut sa generăm din genom rețeaua neuronala pentru fiecare individ din populație, după cum am descris în secțiunea \ref{NeatNetworkCreation}, prin metoda \texttt{GenerateNetworks()}, și sa generam creaturile din scena care vor folosi aceste rețele prin metoda \texttt{GenerateCreatures()} pe care o expunem în listing-ul \ref{lst:GenerateCreatures} ca un exemplu pentru cum arata generarea unei populații de prada, cu tot cu parametri.
+Fiindcă toate genom-urile populației noi au fost asociate speciilor cu care sunt compatibile, tot ce mai rămâne de făcut sa generăm din genom rețeaua neuronala pentru fiecare individ din populație, după cum am descris în secțiunea \ref{NeatNetworkCreation}, prin metoda \texttt{Generate\-Networks()}, și sa generam creaturile din scena care vor folosi aceste rețele prin metoda \texttt{Generate\-Creatures()} pe care o expunem în listing-ul \ref{lst:GenerateCreatures} ca un exemplu pentru cum arata generarea unei populații de prada, cu tot cu parametri.
 \begin{lstlisting}[caption={Generarea speciilor de prada}, label={lst:GenerateCreatures}]
 var foodMask = LayerMask.GetMask("Food");
 foreach (var s in species)
